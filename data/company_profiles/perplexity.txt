@@ -1,0 +1,21 @@
+Perplexity AI Company Profile
+
+Company Name: Perplexity AI
+Website: https://perplexity.ai
+Founded: 2022
+Headquarters: San Francisco, California, USA
+
+Perplexity AI is an AI-powered search and answer engine company founded in August 2022 by Aravind Srinivas, Denis Yarats, Johnny Ho, and Andy Konwinski. Aravind Srinivas previously worked as a research scientist at OpenAI, and Denis Yarats was a research scientist at Meta AI. The company raised over $500 million in funding by 2024 and reached a valuation of over $9 billion, backed by investors including SoftBank, Nvidia, Jeff Bezos, and IVP.
+
+Perplexity AI builds a conversational AI search engine that retrieves up-to-date information from the web and synthesises it into concise, cited answers rather than returning a list of links. Its core product is the Perplexity assistant, which uses large language models combined with real-time web retrieval to answer questions with cited sources, making it a direct alternative to traditional search engines like Google. The platform supports text, image, and file-based queries and offers Pro mode for more advanced reasoning and larger context windows.
+
+Unlike ChatGPT or Claude, Perplexity is designed specifically as a search replacement: every response includes numbered citations linking directly to the source pages, enabling users to verify claims. Perplexity also offers Perplexity Pages for generating structured long-form documents, and an API for developers to build retrieval-augmented applications. The company competes directly with Google Search and is particularly popular for technical research, academic questions, and current-events queries.
+
+Key Facts:
+- Founding Year: 2022
+- Primary Products: Perplexity Search, Perplexity Pro, Perplexity Pages, Perplexity API
+- Headquarters: San Francisco, California
+- Focus: AI-native search engine with real-time web retrieval and cited answers
+- CEO: Aravind Srinivas
+- Investors: SoftBank, Nvidia, Jeff Bezos, IVP
+- Notable: Cited search answers replacing traditional link-based search results

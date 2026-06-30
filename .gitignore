@@ -1,0 +1,31 @@
+# Secrets — never commit
+.env
+.agent_state.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Test / tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Claude Code session data
+.claude/
+
+# macOS
+.DS_Store

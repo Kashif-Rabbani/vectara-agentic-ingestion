@@ -1,0 +1,22 @@
+OpenAI Company Profile
+
+Company Name: OpenAI
+Website: https://openai.com
+Founded: 2015
+Headquarters: San Francisco, California, USA
+
+OpenAI is an AI research and deployment company founded in December 2015 by Sam Altman, Greg Brockman, Ilya Sutskever, Wojciech Zaremba, Elon Musk, and others. Originally established as a non-profit with a mission to ensure that artificial general intelligence (AGI) benefits all of humanity, OpenAI transitioned to a "capped-profit" structure in 2019 to attract the capital needed for frontier AI research.
+
+OpenAI is best known for developing the GPT (Generative Pre-trained Transformer) family of large language models, including GPT-3, GPT-4, and GPT-4o. Its ChatGPT product, launched in November 2022, reached one million users in five days and became one of the fastest-growing consumer applications in history. The company also develops DALL-E for image generation, Whisper for speech recognition, Codex for code generation, and Sora for text-to-video synthesis.
+
+OpenAI pioneered the concept of reinforcement learning from human feedback (RLHF) to align language models with human intent, and its research into scaling laws demonstrated that model capability improves predictably with compute and data. The company operates the OpenAI API, which powers thousands of third-party applications globally.
+
+Key Facts:
+- Founding Year: 2015
+- Primary Products: ChatGPT, GPT-4, DALL-E, Whisper, Sora, OpenAI API
+- Headquarters: San Francisco, California
+- Structure: Capped-profit subsidiary of OpenAI non-profit
+- Focus: Artificial general intelligence safety and deployment
+- CEO: Sam Altman
+- Notable Research: RLHF, Constitutional AI precursors, scaling laws
+- Valuation: One of the most highly valued AI companies globally

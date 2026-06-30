@@ -1,0 +1,21 @@
+Cohere Company Profile
+
+Company Name: Cohere
+Website: https://cohere.com
+Founded: 2019
+Headquarters: Toronto, Ontario, Canada
+
+Cohere is an enterprise AI company founded in 2019 by Aidan Gomez, Ivan Zhang, and Nick Frosst — all alumni of the Google Brain team. Aidan Gomez was one of the co-authors of the landmark "Attention Is All You Need" paper (2017) that introduced the Transformer architecture underpinning virtually all modern large language models. The company is headquartered in Toronto and has raised over $445 million from investors including Nvidia, Oracle, Salesforce Ventures, and Tiger Global.
+
+Cohere focuses exclusively on enterprise customers, providing large language models and natural language processing tools designed for deployment in regulated, security-conscious environments. Unlike consumer AI companies, Cohere offers flexible deployment options including public cloud API, private cloud (AWS, Google Cloud, Azure), and on-premises installation — making it suitable for industries such as finance, healthcare, and government where data privacy is paramount.
+
+Cohere's flagship products include Command, a family of instruction-following models optimised for enterprise tasks such as summarisation, classification, and document analysis; Embed, a high-performance text embedding model for semantic search and retrieval-augmented generation; and Rerank, a cross-encoder model that dramatically improves RAG pipeline accuracy by reordering retrieved results by relevance. The Coral AI assistant is built on these models and targets enterprise productivity use cases. Cohere's North platform provides a complete enterprise AI stack with connectors to Salesforce, Google Drive, SharePoint, and other business systems.
+
+Key Facts:
+- Founding Year: 2019
+- Primary Products: Command (LLM), Embed, Rerank, Coral (AI assistant), North platform
+- Headquarters: Toronto, Ontario, Canada
+- Focus: Enterprise NLP, flexible deployment (cloud / private cloud / on-prem)
+- CEO: Aidan Gomez
+- Notable: Founded by Transformer paper co-author; enterprise-first, no consumer products
+- Investors: Nvidia, Oracle, Salesforce Ventures, Tiger Global

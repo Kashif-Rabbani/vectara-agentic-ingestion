@@ -1,0 +1,21 @@
+Google DeepMind Company Profile
+
+Company Name: Google DeepMind
+Website: https://deepmind.google
+Founded: 2010
+Headquarters: London, United Kingdom
+
+Google DeepMind is an AI research laboratory formed in April 2023 by merging Google Brain (founded 2011) and DeepMind (founded 2010). DeepMind was originally founded in London by Demis Hassabis, Shane Legg, and Mustafa Suleyman before being acquired by Google in 2014 for approximately £400 million. The combined entity is now one of the world's foremost AI research organisations, operating under Alphabet Inc.
+
+Google DeepMind is renowned for breakthrough achievements in reinforcement learning, protein structure prediction, and general-purpose AI systems. Its AlphaGo program defeated world champion Go player Lee Sedol in 2016, marking a landmark moment for AI. AlphaFold 2, released in 2020, solved the 50-year-old protein folding problem with near-experimental accuracy, predicting the 3D structure of virtually every known protein and making the database freely available to researchers worldwide.
+
+The lab develops the Gemini family of multimodal large language models, which are deeply integrated into Google's products including Search, Workspace, and Android. DeepMind's research spans reinforcement learning, neuroscience-inspired AI, robotics, mathematics, climate science, and healthcare. Its AlphaCode system demonstrated competitive programming ability, and AlphaMath advances automated mathematical reasoning.
+
+Key Facts:
+- Founding Year: 2010 (DeepMind; merged into Google DeepMind in 2023)
+- Primary Products: Gemini, AlphaFold, AlphaGo, AlphaCode, AlphaMath
+- Headquarters: London, United Kingdom (with major presence in Mountain View, CA)
+- Parent: Alphabet Inc. (Google)
+- Focus: Fundamental AI research, scientific discovery, AGI safety
+- CEO: Demis Hassabis
+- Notable Achievement: AlphaFold 2 — solved protein folding, Nobel Prize in Chemistry 2024

@@ -1,0 +1,40 @@
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix schema: <https://schema.org/> .
+@prefix ex:     <http://example.org/shapes/> .
+
+# SHACL shapes for schema:Organization (entity_type = "Company").
+# ingest_entities loads this file automatically when entity_type="Company".
+
+ex:CompanyShape
+    a sh:NodeShape ;
+    sh:targetClass schema:Organization ;
+
+    sh:property [
+        sh:path     schema:name ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message  "An Organization must have exactly one schema:name." ;
+    ] ;
+
+    sh:property [
+        sh:path     schema:url ;
+        sh:nodeKind sh:IRI ;
+        sh:maxCount 1 ;
+        sh:message  "schema:url must be an IRI when present." ;
+    ] ;
+
+    sh:property [
+        sh:path     schema:description ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+    ] ;
+
+    sh:property [
+        sh:path     schema:foundingDate ;
+        sh:datatype xsd:gYear ;
+        sh:maxCount 1 ;
+        sh:message  "schema:foundingDate must be an xsd:gYear value (e.g. \"2010\"^^xsd:gYear)." ;
+    ] .

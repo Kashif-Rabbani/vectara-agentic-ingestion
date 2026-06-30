@@ -1,0 +1,21 @@
+Hugging Face Company Profile
+
+Company Name: Hugging Face
+Website: https://huggingface.co
+Founded: 2016
+Headquarters: New York, New York, USA
+
+Hugging Face is an AI company and open-source community platform founded in 2016 by Clément Delangue, Julien Chaumond, and Thomas Wolf. Originally launched as a chatbot application for teenagers, the company pivoted to become the de facto hub for open-source machine learning models, datasets, and applications. Often described as "the GitHub of machine learning," Hugging Face hosts over one million public models and has a community of more than five million developers and researchers.
+
+The company's Transformers library, released in 2019, democratised access to state-of-the-art natural language processing by providing a unified Python API for hundreds of pretrained models including BERT, GPT-2, T5, and LLaMA. The library has over 100,000 GitHub stars and is used by virtually every major AI team in industry and academia. Hugging Face also develops the Diffusers library for image generation, Datasets for managing large-scale training data, and PEFT for parameter-efficient fine-tuning.
+
+Hugging Face's Spaces platform allows users to host and share interactive machine learning demos built with Gradio or Streamlit. The company advocates strongly for open and reproducible AI, and has co-released several frontier open-weight models including BLOOM (a multilingual LLM trained collaboratively by hundreds of researchers), Falcon, and Zephyr. Hugging Face has raised funding from Salesforce, Google, Amazon, Nvidia, and others.
+
+Key Facts:
+- Founding Year: 2016
+- Primary Products: Transformers library, Hugging Face Hub, Spaces, Diffusers, Datasets, PEFT
+- Headquarters: New York City, New York
+- Focus: Open-source ML tooling, model hub, collaborative AI research
+- CEO: Clément Delangue
+- Community: 5M+ developers, 1M+ public models, 200K+ datasets
+- Notable: Host of BLOOM, Falcon, Mistral, LLaMA checkpoints, and thousands of fine-tunes

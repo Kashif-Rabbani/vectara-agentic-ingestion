@@ -1,0 +1,21 @@
+Mistral AI Company Profile
+
+Company Name: Mistral AI
+Website: https://mistral.ai
+Founded: 2023
+Headquarters: Paris, France
+
+Mistral AI is a French artificial intelligence company founded in April 2023 by Arthur Mensch, Guillaume Lample, and Timothée Lacroix — former researchers from Google DeepMind and Meta AI. The company raised €105 million in seed funding within weeks of its founding and reached a valuation of over €2 billion by late 2023, making it the fastest European startup to reach unicorn status. It is backed by Andreessen Horowitz, Lightspeed Venture Partners, and later Microsoft.
+
+Mistral AI's mission is to make frontier AI accessible, efficient, and open. The company's first model, Mistral 7B, released in September 2023 under the Apache 2.0 open licence, outperformed models twice its size including Meta's Llama 2 13B on multiple benchmarks. This demonstrated that careful architecture choices (sliding window attention, grouped query attention) could dramatically improve inference efficiency without sacrificing capability. Mistral Mixture-of-Experts (MoE) model, Mixtral 8x7B, released in December 2023, matched GPT-3.5 performance while being far cheaper to run.
+
+The company offers both open-weight models (downloadable and self-hostable) and commercial API models including Mistral Large, designed to compete with GPT-4. Mistral's approach — releasing capable open-weight models to the community — has sparked debate about the responsible release of powerful AI systems, with Mistral arguing that openness accelerates safety research. The company is also a key voice in European AI regulation discussions.
+
+Key Facts:
+- Founding Year: 2023
+- Primary Products: Mistral 7B, Mixtral 8x7B (MoE), Mistral Large, Le Chat (chatbot)
+- Headquarters: Paris, France
+- Focus: Efficient open-weight LLMs, European AI sovereignty, enterprise API
+- CEO: Arthur Mensch
+- Notable: Fastest European unicorn; Apache 2.0 open licence models
+- Investors: Andreessen Horowitz, Lightspeed, Microsoft
