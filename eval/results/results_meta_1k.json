@@ -14,14 +14,10 @@
       "Thousand Clowns, A"
     ],
     "gold_count": null,
-    "vector_score": 0.625,
+    "vector_score": 1.0,
     "graph_score": 1.0,
-    "vector_answer": "- Alphaville (Alphaville, une \u00e9trange aventure de Lemmy Caution) [1]\n- The Sound of Music [2]\n- A Patch of Blue [3]\n- The Greatest Story Ever Told [4]\n- A Thousand Clowns [5]",
-    "vector_missing": [
-      "Cincinnati Kid, The",
-      "King Rat",
-      "Sons of Katie Elder"
-    ]
+    "vector_answer": "- Alphaville (Alphaville, une \u00e9trange aventure de Lemmy Caution) [1]\n- The Sound of Music [4]\n- A Patch of Blue [7]\n- The Greatest Story Ever Told [10]\n- A Thousand Clowns [13]\n- King Rat [16]\n- The Cincinnati Kid [19]\n- The Sons of Katie Elder [22]",
+    "vector_missing": []
   },
   {
     "id": "A2",
@@ -31,7 +27,7 @@
     "gold_count": 8,
     "vector_score": 0.0,
     "graph_score": 1.0,
-    "vector_answer": "There are 4 movies released in 1965:\n- A Thousand Clowns [1]\n- A Patch of Blue [2]\n- Alphaville [3]\n- The Greatest Story Ever Told [4]",
+    "vector_answer": "There are 7 movies released in 1965:\n- Sons of Katie Elder [4]\n- King Rat [7]\n- Alphaville [13]\n- The Greatest Story Ever Told [16]\n- The Cincinnati Kid [19]\n- The Sound of Music [22]\n- A Thousand Clowns (listed with 1966-09-09 release date but titled as 1965) is excluded since the provided release date is 1966.\n\nAnswer: 6 if using release dates shown; 7 if counting by the titles\u2019 year tags. Based on release dates provided: 6. [4] [7] [13] [16] [19] [22]",
     "vector_missing": [
       "expected count 8"
     ]
@@ -51,12 +47,10 @@
       "Tropic Thunder"
     ],
     "gold_count": null,
-    "vector_score": 0.875,
-    "graph_score": 1.0,
-    "vector_answer": "- A Scanner Darkly (2006) \u2014 as Fred/Bob Arctor [1]\n- The Gingerbread Man (1998) \u2014 as Clyde Pell [2]\n- Air America (1990) \u2014 as Billy Covington [3]\n- Sherlock Holmes: A Game of Shadows (2011) \u2014 as Sherlock Holmes [4]\n- Tropic Thunder (2008) \u2014 as Kirk Lazarus [6]\n- Home for the Holidays (1995) \u2014 as Tommy Larson [7]\n- Sherlock Holmes (2009) \u2014 as Sherlock Holmes [8]",
-    "vector_missing": [
-      "Avengers, The"
-    ]
+    "vector_score": null,
+    "graph_score": null,
+    "vector_answer": null,
+    "not_expressible": true
   },
   {
     "id": "A1",
@@ -64,12 +58,10 @@
     "question": "How many movies in the dataset did Alfred Hitchcock direct?",
     "gold": null,
     "gold_count": 7,
-    "vector_score": 0.0,
-    "graph_score": 1.0,
-    "vector_answer": "Alfred Hitchcock directed 5 movies in this dataset: Saboteur (1942), Strangers on a Train (1951), Rear Window (1954), Rebecca (1940), and Sabotage (1936). [1] [2] [4] [5] [6]",
-    "vector_missing": [
-      "expected count 7"
-    ]
+    "vector_score": null,
+    "graph_score": null,
+    "vector_answer": null,
+    "not_expressible": true
   },
   {
     "id": "M1",
@@ -106,19 +98,10 @@
       "Wendell Corey"
     ],
     "gold_count": null,
-    "vector_score": 0.714,
-    "graph_score": 1.0,
-    "vector_answer": "- Desmond Tester [1]\n- John Loder [1]\n- Oskar Homolka [1]\n- Sylvia Sidney [1]\n- Laurence Olivier [2]\n- Joan Fontaine [2]\n- George Sanders [2]\n- Judith Anderson [2]\n- Grace Kelly [3]\n- Wendell Corey [3]\n- Thelma Ritter [3]\n- James Stewart [3]\n- Alan Baxter [4]\n- Priscilla Lane [4]\n- Otto Kruger [4]\n- Robert Cummings [4]\n- Farley Granger [5]\n- Ruth Roman [5]\n- Robert Walker [5]\n- Leo G. Carroll [5]",
-    "vector_missing": [
-      "Carole Lombard",
-      "Gene Raymond",
-      "Jack Carson",
-      "Louise Latham",
-      "Martin Gabel",
-      "Robert Montgomery",
-      "Sean Connery",
-      "Tippi Hedren"
-    ]
+    "vector_score": null,
+    "graph_score": null,
+    "vector_answer": null,
+    "not_expressible": true
   },
   {
     "id": "O1",
@@ -130,7 +113,7 @@
     "gold_count": null,
     "vector_score": 1.0,
     "graph_score": 1.0,
-    "vector_answer": "The oldest movie in the dataset is \u201cIntolerance: Love's Struggle Throughout the Ages,\u201d from 1916. [14]",
+    "vector_answer": "The oldest movie in the dataset is \u201cIntolerance: Love's Struggle Throughout the Ages,\u201d from 1916 [1].",
     "vector_missing": []
   },
   {
@@ -143,7 +126,7 @@
     "gold_count": null,
     "vector_score": 1.0,
     "graph_score": 1.0,
-    "vector_answer": "Pride and Prejudice (1995) has the highest IMDb rating in the dataset, with a rating of 9.1. [14]",
+    "vector_answer": "Pride and Prejudice (1995) has the highest IMDb rating in the dataset, with a 9.1 rating. [1]",
     "vector_missing": []
   },
   {
@@ -193,31 +176,10 @@
       "Zana Briski"
     ],
     "gold_count": null,
-    "vector_score": 0.0,
-    "graph_score": 1.0,
-    "vector_answer": "- Hayao Miyazaki (directed and voiced in Laputa: Castle in the Sky) [1]\n- Errol Morris (directed and appeared as himself in Fast, Cheap & Out of Control) [9]\n- Alfonso Arau (directed and acted in A Walk in the Clouds) [18]",
-    "vector_missing": [
-      "Alan Cumming",
-      "Barbra Streisand",
-      "Billy Bob Thornton",
-      "Bruce Brown",
-      "Bruce Kimmel",
-      "Burt Lancaster",
-      "Buster Keaton",
-      "Carl Reiner",
-      "Chi Muoi Lo",
-      "Clint Eastwood",
-      "Cyril Collard",
-      "Denzel Washington",
-      "Eric Zala",
-      "H.B. Halicki",
-      "Harold Lloyd",
-      "Jennifer Jason Leigh",
-      "Jim Henson",
-      "Jimmy Wang Yu",
-      "John Lennon",
-      "Jonathan Frakes"
-    ]
+    "vector_score": null,
+    "graph_score": null,
+    "vector_answer": null,
+    "not_expressible": true
   },
   {
     "id": "V1",
@@ -227,10 +189,10 @@
       "From Beyond"
     ],
     "gold_count": null,
-    "vector_score": 1.0,
+    "vector_score": null,
     "graph_score": null,
-    "vector_answer": "From Beyond (1986) [1]",
-    "vector_missing": []
+    "vector_answer": null,
+    "not_expressible": true
   },
   {
     "id": "V2",
@@ -240,9 +202,9 @@
       "John Tucker Must Die"
     ],
     "gold_count": null,
-    "vector_score": 1.0,
+    "vector_score": null,
     "graph_score": null,
-    "vector_answer": "John Tucker Must Die [1]",
-    "vector_missing": []
+    "vector_answer": null,
+    "not_expressible": true
   }
 ]

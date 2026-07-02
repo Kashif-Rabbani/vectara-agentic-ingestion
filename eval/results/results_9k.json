@@ -14,12 +14,10 @@
       "Wings"
     ],
     "gold_count": null,
-    "vector_score": 0.625,
+    "vector_score": 0.875,
     "graph_score": 1.0,
     "vector_answer": "- Metropolis [1]\n- The Lodger: A Story of the London Fog [2]\n- Sunrise: A Song of Two Humans [3]\n- The Kid Brother [4]\n- College [5]\n- Berlin: Symphony of a Great City (Berlin: Die Sinfonie der Gro\u00dfstadt) [6]\n- Napol\u00e9on [7]\n- The Scarlet Letter [8]\n- The General [9]",
     "vector_missing": [
-      "Kid Brother, The",
-      "Lodger: A Story of the London Fog, The",
       "Wings"
     ]
   },
@@ -97,7 +95,7 @@
       "What Just Happened"
     ],
     "gold_count": null,
-    "vector_score": 0.375,
+    "vector_score": 0.411,
     "graph_score": 1.0,
     "vector_answer": "Here are the movies in the dataset where Robert De Niro appears as an actor:\n- Casino (1995) [1]\n- New York, New York (1977) [2]\n- This Boy's Life (1993) [3]\n- True Confessions (1981) [4]\n- Once Upon a Time in America (1984) [5]\n- 15 Minutes (2001) [6]\n- The Mission (1986) [7]\n- Flawless (1999) [8]\n- A Bronx Tale (1993) [9]\n- Night and the City (1992) [10]\n- Bang the Drum Slowly (1973) [11]\n- Showtime (2002) [12]\n- Ronin (1998) [13]\n- Mad Dog and Glory (1993) [14]\n- Mean Streets (1973) [15]\n- Cop Land (1997) [16]\n- Wag the Dog (1997) [17]\n- Analyze This (1999) [18]\n- Everybody's Fine (2009) [19]\n- What Just Happened (2008) [20]\n- Backdraft (1991) [21]\n- We\u2019re No Angels (1989) [22]\n- The King of Comedy (1982) [23]\n- Killer Elite (2011) [24]",
     "vector_missing": [
@@ -105,7 +103,6 @@
       "Angel Heart",
       "Awakenings",
       "Brazil",
-      "Bronx Tale, A",
       "Cape Fear",
       "Deer Hunter, The",
       "Family, The",
@@ -117,10 +114,11 @@
       "Heat",
       "Hide and Seek",
       "Joy",
-      "King of Comedy, The",
       "Last Vegas",
       "Limitless",
-      "Little Fockers"
+      "Little Fockers",
+      "Machete",
+      "Marvin's Room"
     ]
   },
   {

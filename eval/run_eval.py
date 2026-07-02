@@ -60,13 +60,27 @@ SEED = 42
 
 def norm(s: str) -> str:
     s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode()
-    return re.sub(r"[^a-z0-9 ]", "", s.lower()).strip()
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9 ]", " ", s.lower())).strip()
+
+
+_ARTICLES = r"(The|A|An|Les|Le|La|Der|Die|Das|Il|El|Los|Las)"
+
+
+def _variants(gold_name: str) -> set[str]:
+    """Match variants for a gold entity: raw, parenthetical-stripped (alt titles),
+    and leading-article rotation ('Sound of Music, The' → 'The Sound of Music')."""
+    base = re.sub(r"\s*\(.*?\)", "", gold_name).strip()
+    out = {norm(gold_name), norm(base)}
+    m = re.match(rf"^(.*),\s*{_ARTICLES}$", base, re.IGNORECASE)
+    if m:
+        out.add(norm(f"{m.group(2)} {m.group(1)}"))
+    return {v for v in out if v}
 
 
 def entity_recall(gold: list[str], answer: str) -> tuple[float, list[str]]:
-    """Fraction of gold entities whose normalized name appears in the answer."""
+    """Fraction of gold entities matched in the answer (any title variant)."""
     ans = norm(answer)
-    missing = [g for g in gold if norm(g) not in ans]
+    missing = [g for g in gold if not any(v in ans for v in _variants(g))]
     hit = len(gold) - len(missing)
     return (hit / len(gold) if gold else 0.0), missing
 
@@ -110,6 +124,7 @@ def build_battery(tier_movies, acted_by_movie, directed_by_movie, people_by_id, 
             "id": "C1", "class": "completeness",
             "question": f"List the titles of ALL movies in the dataset released in {year}.",
             "gold": gold,
+            "meta": {"filter": f"doc.year = {year}"},
             "sparql": f'PREFIX schema: <https://schema.org/> PREFIX ev: <http://vectara-eval/vocab#> '
                       f'SELECT ?t WHERE {{ GRAPH <{graph_uri}> {{ ?m a schema:Movie ; schema:name ?t ; ev:year {year} }} }} ORDER BY ?t',
         })
@@ -118,6 +133,7 @@ def build_battery(tier_movies, acted_by_movie, directed_by_movie, people_by_id, 
             "id": "A2", "class": "aggregation",
             "question": f"How many movies in the dataset were released in {year}?",
             "gold_count": len(gold),
+            "meta": {"filter": f"doc.year = {year}"},
             "sparql": f'PREFIX schema: <https://schema.org/> PREFIX ev: <http://vectara-eval/vocab#> '
                       f'SELECT (COUNT(?m) AS ?n) WHERE {{ GRAPH <{graph_uri}> {{ ?m a schema:Movie ; ev:year {year} }} }}',
         })
@@ -166,6 +182,7 @@ def build_battery(tier_movies, acted_by_movie, directed_by_movie, people_by_id, 
         "id": "O1", "class": "ordering",
         "question": "What is the oldest movie in the dataset, and what year is it from?",
         "gold": gold,
+        "meta": {"userfn": "0 - get('$.document_metadata.year', 9999)"},
         "sparql": f'PREFIX schema: <https://schema.org/> PREFIX ev: <http://vectara-eval/vocab#> '
                   f'SELECT ?t ?y WHERE {{ GRAPH <{graph_uri}> {{ ?m a schema:Movie ; schema:name ?t ; ev:year ?y }} }} ORDER BY ?y LIMIT {max(1, len(gold))}',
     })
@@ -179,6 +196,7 @@ def build_battery(tier_movies, acted_by_movie, directed_by_movie, people_by_id, 
             "id": "O2", "class": "ordering",
             "question": "Which movie in the dataset has the highest IMDb rating?",
             "gold": gold,
+            "meta": {"userfn": "get('$.document_metadata.rating', 0)"},
             "sparql": f'PREFIX schema: <https://schema.org/> PREFIX ev: <http://vectara-eval/vocab#> '
                       f'SELECT ?t WHERE {{ GRAPH <{graph_uri}> {{ ?m a schema:Movie ; schema:name ?t ; ev:imdbRating ?r }} }} ORDER BY DESC(?r) LIMIT {len(gold)}',
         })
@@ -246,6 +264,54 @@ def vector_answer(corpus_key: str, question: str) -> tuple[str, int]:
     return body.get("summary") or "", len(body.get("search_results", []))
 
 
+def meta_answer(corpus_key: str, item: dict) -> tuple[str, int]:
+    """Arm C: vector search + the strongest metadata strategy expressible today.
+
+    - 'filter' : metadata_filter narrows retrieval to exactly-qualifying docs
+                 (filter hand-derived from the question — a generosity to the
+                 baseline; production would need query rewriting to derive it)
+    - 'userfn' : UDF reranker sorts retrieved candidates by a metadata field.
+                 NOTE: sorts only what retrieval surfaced — not a database sort.
+    """
+    meta = item["meta"]
+    search: dict = {
+        "limit": 100,
+        "lexical_interpolation": 0.05,
+        "context_configuration": {"sentences_before": 2, "sentences_after": 2},
+    }
+    if "filter" in meta:
+        search["metadata_filter"] = meta["filter"]
+        search["reranker"] = {
+            "type": "customer_reranker",
+            "reranker_name": "Rerank_Multilingual_v1",
+            "limit": 100,
+        }
+    else:
+        search["reranker"] = {
+            "type": "userfn",
+            "user_function": meta["userfn"],
+            "limit": 10,
+        }
+    r = httpx.post(
+        f"{BASE_URL}/corpora/{corpus_key}/query",
+        headers={"x-api-key": API_KEY, "Content-Type": "application/json"},
+        json={
+            "query": item["question"],
+            "search": search,
+            "generation": {
+                "generation_preset_name": GEN_PRESET,
+                "max_used_search_results": 25,
+                "response_language": "eng",
+            },
+        },
+        timeout=120,
+    )
+    if r.status_code != 200:
+        return f"HTTP {r.status_code}: {r.text[:200]}", 0
+    body = r.json()
+    return body.get("summary") or "", len(body.get("search_results", []))
+
+
 def sparql_answer(query: str) -> list[str]:
     r = httpx.post(
         f"{SPARQL_BASE}/query",
@@ -267,6 +333,8 @@ def sparql_answer(query: str) -> list[str]:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--tiers", nargs="+", default=["100", "1k", "9k"])
+    parser.add_argument("--arm", choices=["vector", "meta"], default="vector",
+                        help="vector = plain tuned baseline; meta = + metadata filters / UDF sort where expressible")
     args = parser.parse_args()
 
     with open(DATA) as f:
@@ -298,7 +366,20 @@ def main():
         for item in battery:
             print(f"\n[{item['id']} {item['class']}] {item['question'][:90]}")
 
-            vec_text, n_results = vector_answer(corpus_key, item["question"])
+            if args.arm == "meta":
+                if "meta" not in item:
+                    print("  meta      : not expressible (relationship/join — no filter language for it)")
+                    results.append({
+                        "id": item["id"], "class": item["class"], "question": item["question"],
+                        "gold": item.get("gold"), "gold_count": item.get("gold_count"),
+                        "vector_score": None, "graph_score": None,
+                        "vector_answer": None,
+                        "not_expressible": True,
+                    })
+                    continue
+                vec_text, n_results = meta_answer(corpus_key, item)
+            else:
+                vec_text, n_results = vector_answer(corpus_key, item["question"])
 
             if "gold_count" in item:
                 vec_score = 1.0 if count_correct(item["gold_count"], vec_text) else 0.0
@@ -329,7 +410,8 @@ def main():
             })
 
         all_results[tier] = results
-        with open(os.path.join(RESULTS_DIR, f"results_{tier}.json"), "w") as f:
+        prefix = "results_meta_" if args.arm == "meta" else "results_"
+        with open(os.path.join(RESULTS_DIR, f"{prefix}{tier}.json"), "w") as f:
             json.dump(results, f, indent=2)
 
     # ── summary table ────────────────────────────────────────────────────────
@@ -340,7 +422,8 @@ def main():
     for cls in classes:
         row = f"{cls:<15}"
         for tier in args.tiers:
-            rs = [r for r in all_results[tier] if r["class"] == cls]
+            rs = [r for r in all_results[tier]
+                  if r["class"] == cls and r["vector_score"] is not None]
             if rs:
                 v = sum(r["vector_score"] for r in rs) / len(rs)
                 gs = [r["graph_score"] for r in rs if r["graph_score"] is not None]
