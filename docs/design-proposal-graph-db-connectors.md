@@ -21,7 +21,7 @@ We built the connector, ran it end-to-end with a Vectara agent, and benchmarked 
 
 Every Vectara answer today is built the same way: retrieve the passages most similar to the question, have an LLM answer from them. Excellent when the answer lives in a passage. A whole class of questions doesn't — examples below are from our benchmark domain, each measured (§4):
 
-- **"List ALL movies released in 1968."** — Top-k retrieval cannot promise *all*: anything ranked too low silently drops, and the answer still reads as complete.
+- **"List ALL movies featuring Robert De Niro."** — Top-k retrieval cannot promise *all*: anything ranked too low silently drops, and the answer still reads as complete. Measured at 9k docs: 41% of his movies found. (And "featuring" is a relationship — no metadata filter can express it.)
 - **"How many movies did Woody Allen direct?"** — Counting needs every movie, not the 25 most-similar chunks. Measured: it answered 25 — exactly its context size — when the truth is 42.
 - **"Who both directed and acted in the same movie?"** — A join across documents that never mention each other. 291 correct answers exist; the pipeline found 0 and offered two names that don't qualify.
 
@@ -39,7 +39,7 @@ Extend hybrid search. Today every query blends two signals — keyword and seman
 
 ## 4. The evidence — measured, not hypothetical
 
-Dataset: the **Neo4j "recommendations" movies dataset** — the graph industry's standard demo set (9,076 movies, 19,047 people, ~46,000 relationships). Every movie lives identically in both stores: a text document in a Vectara corpus, triples in a knowledge graph. Ground truth is computed **from the relationship data itself**. Three nested corpus scales (100 / 1,000 / 9,076 docs); the vector baseline is **tuned** (neural reranker over 100 candidates, gpt-5 generation, 25 results in context). Harness and raw outputs: [`eval/`](https://github.com/Kashif-Rabbani/vectara-agentic-ingestion/tree/main/eval).
+Dataset: the **Neo4j "recommendations" movies dataset** — the graph industry's standard demo set (9,076 movies, 19,047 people, ~46,000 relationships). Every movie lives identically in both stores: a text document in a Vectara corpus, triples in a knowledge graph. Ground truth is computed **from the relationship data itself**. Three nested corpus scales (100 / 1,000 / 9,076 docs) and **three arms**: a tuned vector baseline (neural reranker over 100 candidates, gpt-5 generation, 25 results in context); a **"+metadata" arm** giving the baseline every additional tool Vectara ships today — hand-derived optimal `metadata_filter`s and UDF-reranker sorts (a deliberate generosity: production would need query rewriting to derive them); and the graph. Harness and raw outputs: [`eval/`](https://github.com/Kashif-Rabbani/vectara-agentic-ingestion/tree/main/eval).
 
 The headline failure, verbatim, at full scale:
 
@@ -51,19 +51,23 @@ The headline failure, verbatim, at full scale:
 
 The other failures are the same species: asked who both directed and acted in the same movie (**291** correct answers), it returned two names — both wrong. Asked the highest-rated movie (Band of Brothers, 9.6), it confidently cited a real 8.4-rated film. Every answer is fluent, cited, and grounded in genuinely retrieved text — **a factual-consistency checker can flag none of them.**
 
-**Scoreboard — mean vector-only recall per class (graph = 1.00 everywhere):**
+**Scoreboard — mean recall per class, cells are `vector / +metadata` (graph = 1.00 on every graph-shaped question, at every scale):**
 
 | Question class | 100 docs | 1,000 docs | 9,076 docs |
 |---|---|---|---|
-| Completeness ("list ALL…") | 0.27 | 0.38 | 0.50 |
-| Aggregation ("how many…") | 1.00 | 0.00 | 0.50 |
-| Ordering ("oldest / highest-rated…") | 0.00 | 1.00 | 0.00 |
-| Multi-hop ("actors in X's movies…") | 0.50 | 0.36 | 0.26 |
+| Completeness ("list ALL…") | 0.80 / 1.00 | 0.75 / 0.94 | 0.64 / 0.71 |
+| Aggregation ("how many…") | 1.00 / 1.00 | 0.00 / 0.00 | 0.50 / 0.00 |
+| Ordering ("oldest / highest-rated…") | 0.00 / 0.50 | 1.00 / 1.00 | 0.00 / 0.00 |
+| Multi-hop ("actors in X's movies…") | 0.50 / *n.e.* | 0.36 / *n.e.* | 0.26 / *n.e.* |
 | **Control — plot similarity (vector's home turf)** | **1.00** | **1.00** | **1.00** |
 
-Two findings. **Failure scales with answer size**: the multi-hop join degrades monotonically as the true answer grows (8 → 28 → 132 names: 1.00 → 0.71 → 0.52), and the 291-answer question scores 0.00 at every scale — an answer set larger than the context budget cannot be assembled by any tuning. **The controls hold**: plot-similarity questions score 1.00 for vector search at every tier. Each method wins where it's structurally suited — the case is *fusion*, not replacement.
+*n.e. = not expressible: the metadata filter language has no joins, so relationship questions cannot be filtered into existence.*
 
-*Caveats (details in [`eval/README.md`](https://github.com/Kashif-Rabbani/vectara-agentic-ingestion/blob/main/eval/README.md)): one question per class per tier, single run, 0.4% of docs failed indexing, dev tenant. The literature agrees on the failure class — "RAG fails on global questions directed at an entire text corpus" (Microsoft Research GraphRAG, [arXiv:2404.16130](https://arxiv.org/abs/2404.16130)).*
+Three findings. **(1) Failure scales with answer size**: the multi-hop join degrades monotonically as the true answer grows (8 → 28 → 132 names: 1.00 → 0.71 → 0.52), actor-completeness likewise (3 → 8 → 56 movies: 1.00 → 0.88 → 0.41), and the 291-answer question scores 0.00 at every scale — an answer set larger than the context budget cannot be assembled by any tuning. **(2) Metadata tools patch only what they can express, and only below a scale ceiling**: a hand-derived year filter fixes attribute completeness (→ 1.00); but UDF sorting is retrieval-bounded — it can only sort candidates retrieval happened to surface, so "oldest movie" works at 1k docs and collapses to 0.00 at 9k; and counting fails even with *perfect* filtered retrieval — given all 8 qualifying movies in context, the LLM counted 6. Relationships remain out of reach entirely. **(3) The controls hold**: plot-similarity questions score 1.00 for vector search at every tier. Each method wins where it's structurally suited — the case is *fusion*, not replacement.
+
+The irreducible gap, precisely: **relationships** (inexpressible in any filter) and **computation** (counting, sorting, aggregating beyond the context/retrieval budget). Those are exactly what a graph query is.
+
+*Caveats (details in [`eval/README.md`](https://github.com/Kashif-Rabbani/vectara-agentic-ingestion/blob/main/eval/README.md)): one question per class per tier, single run, 0.4% of docs failed indexing, dev tenant; an earlier scoring bug (article-inverted titles) was found and fixed — all published numbers are post-correction, and the fix raised *baseline* scores. The literature agrees on the failure class — "RAG fails on global questions directed at an entire text corpus" (Microsoft Research GraphRAG, [arXiv:2404.16130](https://arxiv.org/abs/2404.16130)).*
 
 ## 5. What Vectara gains
 

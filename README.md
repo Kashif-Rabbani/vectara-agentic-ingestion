@@ -7,17 +7,19 @@ Two things live in this repo:
 
 ## Headline result (eval)
 
-Tuned vector search + generation vs. one SPARQL query, on data-driven questions with exact ground truth, at three corpus scales:
+Three arms — tuned vector baseline, vector **+ best expressible metadata strategy** (hand-derived filters, UDF sorts), and one SPARQL query — on data-driven questions with exact ground truth, at three corpus scales. Cells are `vector / +metadata`; graph scores **1.00** on every graph-shaped question at every scale:
 
-| Question class | Vector T-100 | Vector T-1k | Vector T-9k | Graph (all) |
-|---|---|---|---|---|
-| Completeness ("list ALL…") | 0.27 | 0.38 | 0.50 | **1.00** |
-| Aggregation ("how many…") | 1.00 | 0.00 | 0.50 | **1.00** |
-| Ordering ("oldest / highest…") | 0.00 | 1.00 | 0.00 | **1.00** |
-| Multi-hop ("actors in X's movies…") | 0.50 | 0.36 | 0.26 | **1.00** |
-| Control — plot similarity (vector's home turf) | **1.00** | **1.00** | **1.00** | — |
+| Question class | T-100 | T-1k | T-9k |
+|---|---|---|---|
+| Completeness ("list ALL…") | 0.80 / 1.00 | 0.75 / 0.94 | 0.64 / 0.71 |
+| Aggregation ("how many…") | 1.00 / 1.00 | 0.00 / 0.00 | 0.50 / 0.00 |
+| Ordering ("oldest / highest…") | 0.00 / 0.50 | 1.00 / 1.00 | 0.00 / 0.00 |
+| Multi-hop ("actors in X's movies…") | 0.50 / *n.e.* | 0.36 / *n.e.* | 0.26 / *n.e.* |
+| Control — plot similarity (vector's home turf) | **1.00** | **1.00** | **1.00** |
 
-Key finding: the failure scales with **answer size** — a multi-hop question with 291 correct answers scores 0.00 at every tier, because no top-k retrieval can hand the LLM an answer set larger than its context budget. Controls stay perfect for vector search: each method wins where it's structurally suited, which is the case for *fusion*, not replacement.
+*n.e. = not expressible — the metadata filter language has no joins.*
+
+Key findings: the failure scales with **answer size** (a question with 291 correct answers scores 0.00 at every tier — no top-k retrieval can hand the LLM an answer set larger than its context budget); metadata filters patch attribute questions *when someone derives the filter*, but UDF sorting is retrieval-bounded (collapses at 9k docs) and counting fails even with perfect filtered retrieval (all 8 qualifying movies in context → LLM counted 6). The irreducible gap is **relationships + computation** — exactly what a graph query provides. Controls stay perfect for vector search: each method wins where it's structurally suited — *fusion*, not replacement.
 
 Reproduce (~30 min, mostly indexing):
 

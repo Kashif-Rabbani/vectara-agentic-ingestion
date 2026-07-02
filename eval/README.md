@@ -48,39 +48,50 @@ python eval/load_tiers.py       # ~30 min (10k docs indexed; --tiers 100 for a q
 python eval/run_eval.py         # ~10 min → eval/results/
 ```
 
-## Results (2026-07-02, dev tenant)
+## Results (2026-07-03, dev tenant — post scoring-fix)
 
-Per-question vector-only recall (graph = 1.00 on every graph-shaped question at every scale):
+Cells are `vector / +metadata` recall; graph = 1.00 on every graph-shaped
+question at every scale. *(n.e. = not expressible: the metadata filter
+language has no joins.)*
 
-| Question (class) | T-100 | T-1k | T-9k | gold size at 9k |
+| Question (class) | T-100 | T-1k | T-9k | gold at 9k |
 |---|---|---|---|---|
-| All movies from year X (completeness) | 0.20 | 0.12 | 0.62 | 8 |
-| All movies featuring actor X (completeness) | 0.33 | 0.62 | 0.38 | 56 |
-| How many did director X direct? (aggregation) | 1.00 | 0.00 | 0.00 | 42 |
-| How many released in year X? (aggregation) | 1.00 | 0.00 | 1.00 | 8 |
-| Oldest movie? (ordering) | 0.00 | 1.00 | 0.00 | 1 |
-| Highest IMDb rating? (ordering) | 0.00 | 1.00 | 0.00 | 1 |
-| Actors in X's movies? (multi-hop) | 1.00 | 0.71 | 0.52 | 132 |
-| Directed AND acted in same movie? (multi-hop) | 0.00 | 0.00 | 0.00 | 291 |
+| All movies from year X (completeness) | 0.60 / 1.00 | 0.62 / 1.00 | 0.88 / 1.00 | 8 |
+| All movies featuring actor X (completeness) | 1.00 / n.e. | 0.88 / n.e. | 0.41 / n.e. | 56 |
+| How many did director X direct? (aggregation) | 1.00 / n.e. | 0.00 / n.e. | 0.00 / n.e. | 42 |
+| How many released in year X? (aggregation) | 1.00 / 1.00 | 0.00 / 0.00 | 1.00 / 0.00 | 8 |
+| Oldest movie? (ordering) | 0.00 / 1.00 | 1.00 / 1.00 | 0.00 / 0.00 | 1 |
+| Highest IMDb rating? (ordering) | 0.00 / 0.00 | 1.00 / 1.00 | 0.00 / 0.00 | 1 |
+| Actors in X's movies? (multi-hop) | 1.00 / n.e. | 0.71 / n.e. | 0.52 / n.e. | 132 |
+| Directed AND acted in same movie? (multi-hop) | 0.00 / n.e. | 0.00 / n.e. | 0.00 / n.e. | 291 |
 | Which movie is this plot? (control ×2) | 1.00 | 1.00 | 1.00 | 1 |
-| **Mean, graph-shaped questions** | **0.44** | **0.43** | **0.32** | |
+
+Full merged table: `results/REPORT.md` (regenerate with `python eval/report.py`).
 
 Findings:
 
-1. **Failure scales with answer size.** The multi-hop join degrades
-   monotonically as the true answer grows (8 → 28 → 132 names: 1.00 → 0.71 →
-   0.52); the 291-answer self-join scores 0.00 at every scale. An answer set
-   larger than the LLM's context budget (~25 chunks) cannot be assembled by any
-   tuning — the limit is architectural.
-2. **Counting collapses** once the count exceeds what retrieval hands the
-   LLM — with a *confidently wrong* number, not an "I don't know."
+1. **Failure scales with answer size.** Multi-hop join: 1.00 → 0.71 → 0.52 as
+   gold grows 8 → 28 → 132; actor-completeness: 1.00 → 0.88 → 0.41 (3 → 8 → 56);
+   the 291-answer self-join scores 0.00 at every scale. Answer sets larger than
+   the context budget (~25 chunks) cannot be assembled by any tuning.
+2. **Metadata tools patch only what they can express, below a scale ceiling.**
+   Hand-derived `doc.year` filters fix attribute completeness (→ 1.00 at all
+   tiers). But UDF sorting is retrieval-bounded — it sorts only the candidates
+   retrieval surfaced, so "oldest movie" works at 1k and collapses to 0.00 at
+   9k. And counting fails even with perfect filtered retrieval: given all 8
+   qualifying movies in context, the LLM counted 6. Relationships (actor,
+   director, joins) are not expressible in the filter language at all.
 3. **Controls stay perfect for vector search** — the eval is not rigged;
    each method wins its own class. The conclusion is fusion, not replacement.
+4. **Scoring-fix disclosure:** dataset titles are article-inverted ("Sound of
+   Music, The"); the original matcher under-counted natural-form mentions.
+   `rescore.py` re-scored all saved answers with variant matching — the fix
+   *raised baseline scores* (e.g. actor-completeness at T-100: 0.33 → 1.00).
+   All published numbers are post-correction.
 
-Caveats: one question per class per tier (small n — the ordering flip
-0→1→0 is visible noise), single run, 36/9,076 docs (0.4%) failed indexing at
-the 9k tier, dev tenant. The design proposal's pilot scales this to a
-~50-question battery.
+Caveats: one question per class per tier (small n), single run, 36/9,076 docs
+(0.4%) failed indexing at the 9k tier, dev tenant. The design proposal's pilot
+scales this to a ~50-question battery.
 
 ## Files
 
@@ -88,5 +99,8 @@ the 9k tier, dev tenant. The design proposal's pilot scales this to a
 |---|---|
 | `extract_neo4j.py` | pull dataset from the public demo server → `data/movies_full.json` |
 | `load_tiers.py` | build seeded tiers; create corpora + index docs; build RDF + load named graphs |
-| `run_eval.py` | generate battery, answer via both paths, score, write `results/` |
+| `run_eval.py` | generate battery, answer via each arm (`--arm vector|meta`), score, write `results/` |
+| `backfill_rating.py` | add `rating` to document metadata (enables UDF-sort arm) |
+| `rescore.py` | re-score saved answers offline after matcher changes |
+| `report.py` | merge all arms into `results/REPORT.md` |
 | `results/results_<tier>.json` | per-question scores + full generated answers (audit trail) |
