@@ -1,8 +1,37 @@
 # vectara-agentic-ingestion
 
-A demo of an **agentic dual-ingestion pipeline** powered by [Vectara](https://vectara.com) agents and a generic [SPARQL 1.1 MCP server](https://github.com/Kashif-Rabbani/mcp-server-sparql).
+Two things live in this repo:
 
-The agent reads plain-text company profile documents, extracts structured organization data, validates it with SHACL, and writes it into two stores in a single agent session:
+1. **An agentic dual-ingestion demo** — a [Vectara](https://vectara.com) agent reads plain-text documents, extracts structured data, validates it with SHACL, and writes it into a Knowledge Graph (Apache Jena Fuseki, via the generic [SPARQL 1.1 MCP server](https://github.com/Kashif-Rabbani/mcp-server-sparql)) *and* a Vectara corpus, in a single agent session.
+2. **A graph-vs-vector retrieval evaluation** ([`eval/`](eval/)) — a reproducible experiment on the Neo4j movies dataset (9,076 movies) measuring the question classes vector search structurally cannot answer completely, and that a knowledge graph answers exactly. This is the empirical evidence behind [`docs/design-proposal-graph-db-connectors.md`](docs/design-proposal-graph-db-connectors.md).
+
+## Headline result (eval)
+
+Tuned vector search + generation vs. one SPARQL query, on data-driven questions with exact ground truth, at three corpus scales:
+
+| Question class | Vector T-100 | Vector T-1k | Vector T-9k | Graph (all) |
+|---|---|---|---|---|
+| Completeness ("list ALL…") | 0.27 | 0.38 | 0.50 | **1.00** |
+| Aggregation ("how many…") | 1.00 | 0.00 | 0.50 | **1.00** |
+| Ordering ("oldest / highest…") | 0.00 | 1.00 | 0.00 | **1.00** |
+| Multi-hop ("actors in X's movies…") | 0.50 | 0.36 | 0.26 | **1.00** |
+| Control — plot similarity (vector's home turf) | **1.00** | **1.00** | **1.00** | — |
+
+Key finding: the failure scales with **answer size** — a multi-hop question with 291 correct answers scores 0.00 at every tier, because no top-k retrieval can hand the LLM an answer set larger than its context budget. Controls stay perfect for vector search: each method wins where it's structurally suited, which is the case for *fusion*, not replacement.
+
+Reproduce (~30 min, mostly indexing):
+
+```bash
+python eval/extract_neo4j.py    # pull dataset from Neo4j's public demo server
+python eval/load_tiers.py       # dual-ingest 3 nested tiers (corpora + named graphs)
+python eval/run_eval.py         # run the battery, score, write eval/results/
+```
+
+---
+
+# The agentic ingestion demo
+
+The agent reads company profile documents and dual-ingests in one session:
 
 1. **Apache Jena Fuseki** — a Knowledge Graph via SPARQL UPDATE (Schema.org triples)
 2. **Vectara corpus** — for semantic search via the built-in `text_to_core_document` + `core_document_index` tools
