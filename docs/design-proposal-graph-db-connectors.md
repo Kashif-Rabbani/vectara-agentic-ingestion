@@ -5,67 +5,53 @@
 | **Status** | Draft v4 |
 | **Author** | Kashif Rabbani |
 | **Working demo** | [vectara-agentic-ingestion](https://github.com/Kashif-Rabbani/vectara-agentic-ingestion) · [mcp-server-sparql](https://github.com/Kashif-Rabbani/mcp-server-sparql) |
-| **How to read this** | Sections 1–6 are a ~4-minute business read. Section 7 onward is technical design detail — read only if the first half convinces you. |
+| **How to read this** | Sections 1–6 are a ~5-minute business read. Section 7 onward is technical design detail — read only if the first half convinces you. |
 
 ---
 
 ## 1. TL;DR
 
-Vectara's search is excellent at finding text that is *similar* to a question. It cannot **guarantee** answers to questions that require *connecting or enumerating facts* — "list **all** movies released in 1968," "**how many** films did this director make," "who **both** directed and acted in the same movie." We measured this on the Neo4j movies dataset (§4): asked how many movies Woody Allen directed, the tuned pipeline answered **25**, with a citation for every one — the true count is **42**. The answer is fluent, grounded, and silently wrong, and neither we nor the customer can tell. (An architectural property of top-k retrieval, documented in the literature and measured across three corpus scales in §4.)
+Vectara's search finds text *similar* to a question. It cannot **guarantee** answers that require *connecting or enumerating* facts — "list **all**…", "**how many**…", "who is **connected** to…". Measured on the Neo4j movies dataset (§4): asked how many movies Woody Allen directed, our tuned pipeline answered **25**, with a citation for every one — the truth is **42**. Fluent, grounded, silently wrong.
 
-Knowledge graphs answer exactly these questions — deterministically and completely. Many enterprise customers already own one. Vectara currently has no first-party way to connect to any of them.
+Knowledge graphs answer these questions exactly, and many enterprise customers already own one. Vectara has no first-party way to connect to them.
 
-We built and demoed the missing piece: a generic graph-database connector that already works end-to-end with a Vectara agent. **The ask is a small, time-boxed pilot** to host it officially and measure the answer-quality improvement. If the measurements or customer interest aren't there, we stop — the sunk cost is a few weeks. The long-term opportunity, if the pilot succeeds, is a genuine differentiator: graph facts and document search fused into one answer, with one citation model, through the pipeline Vectara already ships.
+We built the connector, ran it end-to-end with a Vectara agent, and benchmarked it at three scales. **The ask (§6) is a small, time-boxed pilot** — host the connector officially, scale the benchmark, validate with design partners. If the quality delta or the demand isn't there, we stop. If it is, the long-term play is a real differentiator: graph facts and semantic search fused into one answer, one citation model, through the pipeline Vectara already ships.
 
 ## 2. Problem Statement
 
-Every Vectara answer today is built the same way: find the passages of text most similar to the user's question, then have an LLM write an answer from those passages. This works remarkably well when the answer *lives in a passage*.
+Every Vectara answer today is built the same way: retrieve the passages most similar to the question, have an LLM answer from them. Excellent when the answer lives in a passage. A whole class of questions doesn't — examples below are from our benchmark domain, each measured (§4):
 
-But a whole class of questions doesn't live in any passage. Every example below comes from our benchmark domain — the Neo4j movies dataset (§4) — so every claim here is a measured result, not a thought experiment:
+- **"List ALL movies released in 1968."** — Top-k retrieval cannot promise *all*: anything ranked too low silently drops, and the answer still reads as complete.
+- **"How many movies did Woody Allen direct?"** — Counting needs every movie, not the 25 most-similar chunks. Measured: it answered 25 — exactly its context size — when the truth is 42.
+- **"Who both directed and acted in the same movie?"** — A join across documents that never mention each other. 291 correct answers exist; the pipeline found 0 and offered two names that don't qualify.
 
-- **"List ALL movies released in 1968."** — *All* is a promise similarity search cannot make. It retrieves the best-matching passages; any movie whose document didn't rank high enough is simply missing — and the answer still reads as complete.
-- **"How many movies did Woody Allen direct?"** — Counting requires seeing every movie, not the 25 most relevant chunks. Measured: the pipeline answered **25** — exactly the size of its context window — when the truth is **42**.
-- **"Who both directed and acted in the same movie?"** — The answer is a join across documents that never mention each other. There are **291** correct answers in the dataset; the measured pipeline found **0** of them, and the two names it offered don't qualify.
+The shapes are exactly the enterprise questions — "all contracts expiring this year," "how many portfolio companies are EU-based," "which vendors reach a sanctioned entity through subsidiaries" — we use the movie forms because we can back each one with data.
 
-The question *shapes* are exactly the enterprise ones — "all suppliers with contracts expiring this year" (completeness), "how many portfolio companies are EU-based" (aggregation), "which vendors connect to a sanctioned entity through subsidiaries" (multi-hop) — we use the movie forms throughout because we can back each one with data.
+These failures are quiet: confident, well-cited, wrong by omission. Nothing in our stack can flag them — every cited fragment is *true*; the error lives in what retrieval never surfaced. For a brand built on grounded, hallucination-free answers, that is the worst kind of failure.
 
-These failures are quiet. The customer gets a confident, well-cited, *wrong-by-omission* answer. For a company whose brand is grounded, hallucination-free answers, this is exactly the kind of failure we should refuse to ship — and today we have no mechanism that even detects it.
+Meanwhile, the systems that answer these questions perfectly — knowledge graphs — already sit in customers' data centers (compliance, supply-chain, org/MDM graphs). A customer asking *"can Vectara use our knowledge graph?"* today effectively hears **no**: self-host your own tool server, with no support, vetting, or credential management.
 
-Meanwhile, the systems that answer such questions perfectly — knowledge graphs and graph databases — are already sitting inside our customers' data centers: compliance graphs in banks, supply-chain graphs in manufacturing, org and product graphs everywhere. A customer who asks *"can Vectara use our knowledge graph?"* today gets, effectively, a **no**: their only option is to build, host, and expose their own tool server, with no Vectara support, security vetting, or credential management.
-
-**The problem, in one sentence: Vectara cannot guarantee correct answers to connection-and-completeness questions, and cannot connect to the customer systems that can.**
+**In one sentence: Vectara cannot guarantee correct answers to connection-and-completeness questions, and cannot connect to the customer systems that can.**
 
 ## 3. What we're proposing (plain-language)
 
-Think of it as extending Vectara's existing hybrid search. Today, every query already blends **two** retrieval signals — keyword matching and semantic (vector) similarity — and a reranker merges them into the final result list. We propose adding a **third signal: the customer's knowledge graph.**
-
-The query goes to all three sources. Each returns its best results. The graph's results are precise facts ("Annie Hall — directed by Woody Allen, 1977"; "42 films match"); the corpus's results are relevant text passages. The existing reranker merges them, and the existing generation step writes one answer with one set of citations — some pointing at documents, some at graph facts.
-
-The customer experience: ask the question you actually have, get an answer that is both *complete* (graph) and *contextual* (documents). No new UI, no new query API concepts to learn — it's the same `/v2/query` with one more data source attached.
+Extend hybrid search. Today every query blends two signals — keyword and semantic — and a reranker merges them into one result list. We add a third: the customer's knowledge graph. Graph hits arrive as precise facts, corpus hits as text passages; the existing reranker merges them, and the existing generation step writes one answer with one set of citations spanning both. Same `/v2/query`, one more source. The customer gets an answer that is *complete* (graph) and *contextual* (documents) at once.
 
 ## 4. The evidence — measured, not hypothetical
 
-This proposal's experiment has already had its first run. Dataset: the **Neo4j "recommendations" movies dataset** — the graph-database industry's own standard demo dataset (9,076 movies, 19,047 people, ~46,000 acting/directing relationships, pulled from Neo4j's public demo server). Every movie exists identically in both stores: as a text document (plot, cast, directors, rating) in a Vectara corpus, and as triples in a knowledge graph. Ground truth for every question is computed **from the relationship data itself** — no hand labeling. Three corpus scales (100 / 1,000 / 9,076 documents, nested and seeded), and a **tuned** vector baseline: neural reranker over 100 candidates, gpt-5 generation, 25 results in context — not the defaults. Harness and raw outputs: [`eval/`](https://github.com/Kashif-Rabbani/vectara-agentic-ingestion/tree/main/eval).
+Dataset: the **Neo4j "recommendations" movies dataset** — the graph industry's standard demo set (9,076 movies, 19,047 people, ~46,000 relationships). Every movie lives identically in both stores: a text document in a Vectara corpus, triples in a knowledge graph. Ground truth is computed **from the relationship data itself**. Three nested corpus scales (100 / 1,000 / 9,076 docs); the vector baseline is **tuned** (neural reranker over 100 candidates, gpt-5 generation, 25 results in context). Harness and raw outputs: [`eval/`](https://github.com/Kashif-Rabbani/vectara-agentic-ingestion/tree/main/eval).
 
-**Three questions at full scale (9,076 movies) — vector answers verbatim:**
+The headline failure, verbatim, at full scale:
 
 > **"How many movies in the dataset did Woody Allen direct?"** — truth: **42**
 >
-> Vector + generation answered: *"Woody Allen directed 25 movies in this dataset. [1] [2] … [25]"*
+> Vector + generation: *"Woody Allen directed 25 movies in this dataset. [1] [2] … [25]"*
 >
-> Not a random error: **25 is exactly the number of retrieved results the LLM was given** (`max_used_search_results: 25`). It counted its context window and presented that as the dataset total — with a citation for every one. Fully grounded, confidently wrong. The graph answers 42, deterministically.
+> Not a random error: **25 is exactly the number of retrieved results the LLM was given.** It counted its context window and presented that as the dataset total, citing every one. The graph answers 42, deterministically.
 
-> **"Which people both directed and acted in the same movie?"** — truth: **291 people**
->
-> Vector + generation answered: *"Tony Scott (directed and acted in The Hunger); Brett Morgen (directed and acted in On the Ropes)"* — two names, and per the dataset's relationship structure **both are wrong**; all 291 correct answers were missed. The graph: one SPARQL self-join, all 291.
+The other failures are the same species: asked who both directed and acted in the same movie (**291** correct answers), it returned two names — both wrong. Asked the highest-rated movie (Band of Brothers, 9.6), it confidently cited a real 8.4-rated film. Every answer is fluent, cited, and grounded in genuinely retrieved text — **a factual-consistency checker can flag none of them.**
 
-> **"Which movie has the highest IMDb rating?"** — truth: **Band of Brothers (9.6)**
->
-> Vector + generation answered: *"Man with the Movie Camera (1929) with a rating of 8.4. [2]"* — a real movie, its real rating, correctly cited, and not the answer.
-
-Every one of these answers is fluent, cited, and grounded in genuinely retrieved text. **A factual-consistency checker cannot flag any of them** — each cited fragment is true. The failure lives in what retrieval never surfaced.
-
-**Full scoreboard — mean vector-only recall per class (graph = 1.00 on every graph-shaped question, at every scale):**
+**Scoreboard — mean vector-only recall per class (graph = 1.00 everywhere):**
 
 | Question class | 100 docs | 1,000 docs | 9,076 docs |
 |---|---|---|---|
@@ -75,28 +61,28 @@ Every one of these answers is fluent, cited, and grounded in genuinely retrieved
 | Multi-hop ("actors in X's movies…") | 0.50 | 0.36 | 0.26 |
 | **Control — plot similarity (vector's home turf)** | **1.00** | **1.00** | **1.00** |
 
-Two structural findings: (1) **failure scales with answer size** — the multi-hop join degrades monotonically as the true answer grows (8 → 28 → 132 names: recall 1.00 → 0.71 → 0.52), and the 291-answer question scores 0.00 at every scale, because an answer set larger than the context budget cannot be assembled by any amount of tuning; (2) **the controls hold** — plot-similarity questions score 1.00 for vector search at every tier. Each method wins where it is structurally suited: the case is *fusion*, not replacement.
+Two findings. **Failure scales with answer size**: the multi-hop join degrades monotonically as the true answer grows (8 → 28 → 132 names: 1.00 → 0.71 → 0.52), and the 291-answer question scores 0.00 at every scale — an answer set larger than the context budget cannot be assembled by any tuning. **The controls hold**: plot-similarity questions score 1.00 for vector search at every tier. Each method wins where it's structurally suited — the case is *fusion*, not replacement.
 
-*Caveats: one question per class per tier (the ordering 0→1→0 flip is small-n noise), single run, 36 of 9,076 documents (0.4%) failed to index, dev tenant. The pilot (§6) scales the battery to ~50 questions.*
-
-This failure class is documented in the literature, not just our experiment: Microsoft Research's GraphRAG paper opens from the same observation — "RAG fails on global questions directed at an entire text corpus" (Edge et al., [arXiv:2404.16130](https://arxiv.org/abs/2404.16130)).
+*Caveats (details in [`eval/README.md`](https://github.com/Kashif-Rabbani/vectara-agentic-ingestion/blob/main/eval/README.md)): one question per class per tier, single run, 0.4% of docs failed indexing, dev tenant. The literature agrees on the failure class — "RAG fails on global questions directed at an entire text corpus" (Microsoft Research GraphRAG, [arXiv:2404.16130](https://arxiv.org/abs/2404.16130)).*
 
 ## 5. What Vectara gains
 
-1. **A stronger anti-hallucination story — our core brand.** "Confidently incomplete" answers are a grounding failure that today's stack can neither prevent nor detect — note that HHEM cannot catch them either, since every cited fragment in an incomplete answer *is* consistent with its sources. Graph fusion eliminates the failure for the question classes above, and a labeled eval set (Open RAG Eval methodology, golden answers) lets us *quantify* the improvement — a marketable number, not a claim.
-2. **A door into graph-owning enterprises.** Banks, pharma, manufacturing, and MDM-mature companies already own knowledge graphs. First-party connectivity turns "can you use our KG?" from a no into a demo.
-3. **One connector, most of the market.** Our reference server implements the W3C SPARQL 1.1 Protocol — a formal standard, not a vendor API. Verified end-to-end against Apache Jena Fuseki; GraphDB, Stardog, Virtuoso, Blazegraph, and Amazon Neptune all publish SPARQL 1.1-compliant endpoints, so the same build is expected to work against them (validating 2–3 of these is a pilot task). This is not a per-vendor connector treadmill.
-4. **Differentiated timing.** GraphRAG approaches are shipping across the industry (Microsoft GraphRAG, Neo4j GenAI integrations, Neptune with Bedrock) — predominantly as agent-tool bolt-ons. We are not aware of any platform that fuses graph results through a production reranking, citation, and grounding pipeline (*validate via competitive research before using externally*). Vectara already owns that pipeline; we'd be adding a source, not building a system.
+1. **A stronger anti-hallucination story — our brand.** "Confidently incomplete" answers are a grounding failure nothing in today's stack detects (HHEM included — every cited fragment is true). Graph fusion eliminates it for these question classes, measurably.
+2. **A door into graph-owning enterprises.** Banks, pharma, manufacturing, MDM shops already own knowledge graphs; first-party connectivity turns "can you use our KG?" from a no into a demo.
+3. **One connector, most of the market.** The connector implements the W3C SPARQL 1.1 standard — verified against Jena Fuseki; GraphDB, Stardog, Virtuoso, Blazegraph, and Neptune expose compliant endpoints (validating 2–3 is a pilot task). No per-vendor treadmill.
+4. **Differentiated timing.** GraphRAG is shipping industry-wide, almost entirely as agent-tool bolt-ons. We are not aware of any platform fusing graph results through a production reranking + citation + grounding pipeline (*validate before external use*). Vectara already owns that pipeline.
 
-**Honest gap:** we don't yet have named customer demand — that signal should be gathered from sales/CS in parallel with the pilot. *(To fill in: ☐ prospects with existing KGs · ☐ deals where this came up · ☐ community asks.)*
+**Honest gap:** no named customer demand yet — to gather from sales/CS in parallel. *(☐ prospects with KGs · ☐ deals where this came up · ☐ community asks.)*
 
 ## 6. The ask
 
-Approve a **small, time-boxed pilot** (size S — the hard part is already built and demoed):
+Approve a **time-boxed pilot** (size S — the connector and benchmark harness already exist):
 
-1. **Host** the existing SPARQL connector as a Vectara-certified tool (today a customer must self-host and tunnel it — a non-starter).
-2. **Measure — scale the §4 experiment.** The harness is built and committed ([`eval/`](https://github.com/Kashif-Rabbani/vectara-agentic-ingestion/tree/main/eval)); the pilot scales it: ~50 questions per tier (killing the small-n noise visible in §4's ordering row), multiple runs, HHEM + Open RAG Eval scoring alongside entity recall, and control questions retained so the eval keeps showing where graphs *don't* help.
-3. **Validate**: run it with 1–2 design partners who already own a knowledge graph.
+1. **Host** the SPARQL connector as a Vectara-certified tool (today's self-host-and-tunnel path is a non-starter for customers).
+2. **Measure** — scale the §4 experiment: ~50 questions per tier, multiple runs, HHEM + Open RAG Eval scoring, controls retained so the eval keeps showing where graphs *don't* help.
+3. **Validate** with 1–2 design partners who already own a knowledge graph.
+
+**Exit criteria:** a measured quality delta plus at least one design partner who wants more — otherwise we stop, and the sunk cost is the pilot. Nothing in it touches the public query API. The native integration (`search.graphs[]` in `/v2/query`, §7–8) is the Phase-2 opportunity the pilot de-risks — not today's ask.
 
 ---
 
