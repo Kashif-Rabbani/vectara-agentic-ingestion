@@ -1,0 +1,161 @@
+{
+  "100": [
+    {
+      "id": "C1",
+      "class": "completeness",
+      "question": "List the titles of ALL movies in the dataset released in 2009.",
+      "gold": [
+        "Broderskab (Brotherhood)",
+        "Christmas Carol, A",
+        "New in Town",
+        "Vampire Girl vs. Frankenstein Girl (Ky\u00fbketsu Sh\u00f4jo tai Sh\u00f4jo Furanken)",
+        "Will Ferrell: You're Welcome America - A Final Night with George W Bush"
+      ],
+      "gold_count": null,
+      "vector_score": 0.2,
+      "graph_score": 1.0,
+      "vector_answer": "- A Christmas Carol [1]\n- Vampire Girl vs. Frankenstein Girl [2]\n- New in Town [3]",
+      "vector_missing": [
+        "Broderskab (Brotherhood)",
+        "Christmas Carol, A",
+        "Vampire Girl vs. Frankenstein Girl (Ky\u00fbketsu Sh\u00f4jo tai Sh\u00f4jo Furanken)",
+        "Will Ferrell: You're Welcome America - A Final Night with George W Bush"
+      ]
+    },
+    {
+      "id": "A2",
+      "class": "aggregation",
+      "question": "How many movies in the dataset were released in 2009?",
+      "gold": null,
+      "gold_count": 5,
+      "vector_score": 1.0,
+      "graph_score": 1.0,
+      "vector_answer": "There are 5 movies released in 2009:\n- A Christmas Carol (2009-11-06) [1]\n- Vampire Girl vs. Frankenstein Girl (2009-06-26) [2]\n- Will Ferrell: You\u2019re Welcome America - A Final Night with George W Bush (2009-03-14) [3]\n- New in Town (2009-01-30) [5]\n- New in Town (duplicate entry) (2009-01-30) [6]\n\nIf counting unique titles, it\u2019s 4; counting all entries in the dataset as provided, it\u2019s 5. [1] [2] [3] [5] [6]",
+      "vector_missing": []
+    },
+    {
+      "id": "C2",
+      "class": "completeness",
+      "question": "List all movies in the dataset featuring Demi Moore as an actor.",
+      "gold": [
+        "Few Good Men, A",
+        "Indecent Proposal",
+        "Scarlet Letter, The"
+      ],
+      "gold_count": null,
+      "vector_score": 0.333,
+      "graph_score": 1.0,
+      "vector_answer": "The movies in the dataset featuring Demi Moore are:\n- Indecent Proposal (1993) as Diana Murphy [1]\n- A Few Good Men (1992) as Lt. Cdr. JoAnne Galloway [2]\n- The Scarlet Letter (1995) as Hester Prynne [3]",
+      "vector_missing": [
+        "Few Good Men, A",
+        "Scarlet Letter, The"
+      ]
+    },
+    {
+      "id": "A1",
+      "class": "aggregation",
+      "question": "How many movies in the dataset did Roman Polanski direct?",
+      "gold": null,
+      "gold_count": 2,
+      "vector_score": 1.0,
+      "graph_score": 1.0,
+      "vector_answer": "Roman Polanski directed 2 movies in the dataset: Carnage (2011) and Cul-de-sac (1966) [1] [3]",
+      "vector_missing": []
+    },
+    {
+      "id": "M1",
+      "class": "multihop",
+      "question": "Which actors appeared in movies directed by Roman Polanski? List their names.",
+      "gold": [
+        "Christoph Waltz",
+        "Donald Pleasence",
+        "Fran\u00e7oise Dorl\u00e9ac",
+        "Jack MacGowran",
+        "Jodie Foster",
+        "John C. Reilly",
+        "Kate Winslet",
+        "Lionel Stander"
+      ],
+      "gold_count": null,
+      "vector_score": 1.0,
+      "graph_score": 1.0,
+      "vector_answer": "- Jodie Foster [1]\n- Kate Winslet [1]\n- Christoph Waltz [1]\n- John C. Reilly [1]\n- Jack MacGowran [3]\n- Fran\u00e7oise Dorl\u00e9ac [3]\n- Lionel Stander [3]\n- Donald Pleasence [3]",
+      "vector_missing": []
+    },
+    {
+      "id": "O1",
+      "class": "ordering",
+      "question": "What is the oldest movie in the dataset, and what year is it from?",
+      "gold": [
+        "Little Lord Fauntleroy"
+      ],
+      "gold_count": null,
+      "vector_score": 0.0,
+      "graph_score": 1.0,
+      "vector_answer": "The oldest movie in the dataset is The Adventures of Robin Hood from 1938 [24].",
+      "vector_missing": [
+        "Little Lord Fauntleroy"
+      ]
+    },
+    {
+      "id": "O2",
+      "class": "ordering",
+      "question": "Which movie in the dataset has the highest IMDb rating?",
+      "gold": [
+        "Bill Hicks: Relentless"
+      ],
+      "gold_count": null,
+      "vector_score": 0.0,
+      "graph_score": 1.0,
+      "vector_answer": "The movie with the highest IMDb rating in this dataset is Sholay (1975) with a rating of 8.5. [5]",
+      "vector_missing": [
+        "Bill Hicks: Relentless"
+      ]
+    },
+    {
+      "id": "M2",
+      "class": "multihop",
+      "question": "Which people both directed and acted in the same movie in the dataset? Name them.",
+      "gold": [
+        "Keanu Reeves",
+        "Myles Berkowitz",
+        "Tommy Chong"
+      ],
+      "gold_count": null,
+      "vector_score": 0.0,
+      "graph_score": 1.0,
+      "vector_answer": "- John Cromwell (directed and appears in Little Lord Fauntleroy) [1]\n- William Arntz (directed and appears in \u201cWhat the Bleep Do We Know!?\u201d / DO WE KNOW?!) [2]\n- Betsy Chasse (directed and appears in \u201cWhat the Bleep Do We Know!?\u201d / DO WE KNOW?!) [2]\n- Mark Vicente (directed and appears in \u201cWhat the Bleep Do We Know!?\u201d / DO WE KNOW?!) [2]\n- Paul Newman (directed and appears in Rachel, Rachel) [13]",
+      "vector_missing": [
+        "Keanu Reeves",
+        "Myles Berkowitz",
+        "Tommy Chong"
+      ]
+    },
+    {
+      "id": "V1",
+      "class": "control",
+      "question": "Which movie matches this description: A high school student's love for a 15-year-old girl is thwarted by parental disapproval, circumstance and accident.",
+      "gold": [
+        "Endless Love"
+      ],
+      "gold_count": null,
+      "vector_score": 1.0,
+      "graph_score": null,
+      "vector_answer": "Endless Love (1981) [1]",
+      "vector_missing": []
+    },
+    {
+      "id": "V2",
+      "class": "control",
+      "question": "Which movie matches this description: Kate and her actor brother live in N.Y. in the 21st Century. Her ex-boyfriend, Stuart, lives above her apartment. Stuart finds a space near the Brooklyn Bridge where there is a gap in time....",
+      "gold": [
+        "Kate & Leopold"
+      ],
+      "gold_count": null,
+      "vector_score": 1.0,
+      "graph_score": null,
+      "vector_answer": "Kate & Leopold (2001) [2]",
+      "vector_missing": []
+    }
+  ]
+}

@@ -29,3 +29,6 @@ htmlcov/
 
 # macOS
 .DS_Store
+
+# Eval dataset cache (regenerable via eval/extract_neo4j.py)
+eval/data/
