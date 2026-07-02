@@ -1,0 +1,254 @@
+[
+  {
+    "id": "C1",
+    "class": "completeness",
+    "question": "List the titles of ALL movies in the dataset released in 1965.",
+    "gold": [
+      "Alphaville (Alphaville, une \u00e9trange aventure de Lemmy Caution)",
+      "Cincinnati Kid, The",
+      "Greatest Story Ever Told, The",
+      "King Rat",
+      "Patch of Blue, A",
+      "Sons of Katie Elder",
+      "Sound of Music, The",
+      "Thousand Clowns, A"
+    ],
+    "gold_count": null,
+    "vector_score": 0.125,
+    "graph_score": 1.0,
+    "vector_answer": "- Alphaville (Alphaville, une \u00e9trange aventure de Lemmy Caution) [1]\n- The Sound of Music [2]\n- A Patch of Blue [3]\n- The Greatest Story Ever Told [4]\n- A Thousand Clowns [5]",
+    "vector_missing": [
+      "Cincinnati Kid, The",
+      "Greatest Story Ever Told, The",
+      "King Rat",
+      "Patch of Blue, A",
+      "Sons of Katie Elder",
+      "Sound of Music, The",
+      "Thousand Clowns, A"
+    ]
+  },
+  {
+    "id": "A2",
+    "class": "aggregation",
+    "question": "How many movies in the dataset were released in 1965?",
+    "gold": null,
+    "gold_count": 8,
+    "vector_score": 0.0,
+    "graph_score": 1.0,
+    "vector_answer": "There are 4 movies released in 1965:\n- A Thousand Clowns [1]\n- A Patch of Blue [2]\n- Alphaville [3]\n- The Greatest Story Ever Told [4]",
+    "vector_missing": [
+      "expected count 8"
+    ]
+  },
+  {
+    "id": "C2",
+    "class": "completeness",
+    "question": "List all movies in the dataset featuring Robert Downey Jr. as an actor.",
+    "gold": [
+      "Air America",
+      "Avengers, The",
+      "Gingerbread Man, The",
+      "Home for the Holidays",
+      "Scanner Darkly, A",
+      "Sherlock Holmes",
+      "Sherlock Holmes: A Game of Shadows",
+      "Tropic Thunder"
+    ],
+    "gold_count": null,
+    "vector_score": 0.625,
+    "graph_score": 1.0,
+    "vector_answer": "- A Scanner Darkly (2006) \u2014 as Fred/Bob Arctor [1]\n- The Gingerbread Man (1998) \u2014 as Clyde Pell [2]\n- Air America (1990) \u2014 as Billy Covington [3]\n- Sherlock Holmes: A Game of Shadows (2011) \u2014 as Sherlock Holmes [4]\n- Tropic Thunder (2008) \u2014 as Kirk Lazarus [6]\n- Home for the Holidays (1995) \u2014 as Tommy Larson [7]\n- Sherlock Holmes (2009) \u2014 as Sherlock Holmes [8]",
+    "vector_missing": [
+      "Avengers, The",
+      "Gingerbread Man, The",
+      "Scanner Darkly, A"
+    ]
+  },
+  {
+    "id": "A1",
+    "class": "aggregation",
+    "question": "How many movies in the dataset did Alfred Hitchcock direct?",
+    "gold": null,
+    "gold_count": 7,
+    "vector_score": 0.0,
+    "graph_score": 1.0,
+    "vector_answer": "Alfred Hitchcock directed 5 movies in this dataset: Saboteur (1942), Strangers on a Train (1951), Rear Window (1954), Rebecca (1940), and Sabotage (1936). [1] [2] [4] [5] [6]",
+    "vector_missing": [
+      "expected count 7"
+    ]
+  },
+  {
+    "id": "M1",
+    "class": "multihop",
+    "question": "Which actors appeared in movies directed by Alfred Hitchcock? List their names.",
+    "gold": [
+      "Alan Baxter",
+      "Carole Lombard",
+      "Desmond Tester",
+      "Farley Granger",
+      "Gene Raymond",
+      "George Sanders",
+      "Grace Kelly",
+      "Jack Carson",
+      "James Stewart",
+      "Joan Fontaine",
+      "John Loder",
+      "Judith Anderson",
+      "Laurence Olivier",
+      "Leo G. Carroll",
+      "Louise Latham",
+      "Martin Gabel",
+      "Oskar Homolka",
+      "Otto Kruger",
+      "Priscilla Lane",
+      "Robert Cummings",
+      "Robert Montgomery",
+      "Robert Walker",
+      "Ruth Roman",
+      "Sean Connery",
+      "Sylvia Sidney",
+      "Thelma Ritter",
+      "Tippi Hedren",
+      "Wendell Corey"
+    ],
+    "gold_count": null,
+    "vector_score": 0.714,
+    "graph_score": 1.0,
+    "vector_answer": "- Desmond Tester [1]\n- John Loder [1]\n- Oskar Homolka [1]\n- Sylvia Sidney [1]\n- Laurence Olivier [2]\n- Joan Fontaine [2]\n- George Sanders [2]\n- Judith Anderson [2]\n- Grace Kelly [3]\n- Wendell Corey [3]\n- Thelma Ritter [3]\n- James Stewart [3]\n- Alan Baxter [4]\n- Priscilla Lane [4]\n- Otto Kruger [4]\n- Robert Cummings [4]\n- Farley Granger [5]\n- Ruth Roman [5]\n- Robert Walker [5]\n- Leo G. Carroll [5]",
+    "vector_missing": [
+      "Carole Lombard",
+      "Gene Raymond",
+      "Jack Carson",
+      "Louise Latham",
+      "Martin Gabel",
+      "Robert Montgomery",
+      "Sean Connery",
+      "Tippi Hedren"
+    ]
+  },
+  {
+    "id": "O1",
+    "class": "ordering",
+    "question": "What is the oldest movie in the dataset, and what year is it from?",
+    "gold": [
+      "Intolerance: Love's Struggle Throughout the Ages"
+    ],
+    "gold_count": null,
+    "vector_score": 1.0,
+    "graph_score": 1.0,
+    "vector_answer": "The oldest movie in the dataset is \u201cIntolerance: Love's Struggle Throughout the Ages,\u201d from 1916. [14]",
+    "vector_missing": []
+  },
+  {
+    "id": "O2",
+    "class": "ordering",
+    "question": "Which movie in the dataset has the highest IMDb rating?",
+    "gold": [
+      "Pride and Prejudice"
+    ],
+    "gold_count": null,
+    "vector_score": 1.0,
+    "graph_score": 1.0,
+    "vector_answer": "Pride and Prejudice (1995) has the highest IMDb rating in the dataset, with a rating of 9.1. [14]",
+    "vector_missing": []
+  },
+  {
+    "id": "M2",
+    "class": "multihop",
+    "question": "Which people both directed and acted in the same movie in the dataset? Name them.",
+    "gold": [
+      "Alan Cumming",
+      "Barbra Streisand",
+      "Billy Bob Thornton",
+      "Bruce Brown",
+      "Bruce Kimmel",
+      "Burt Lancaster",
+      "Buster Keaton",
+      "Carl Reiner",
+      "Chi Muoi Lo",
+      "Clint Eastwood",
+      "Cyril Collard",
+      "Denzel Washington",
+      "Eric Zala",
+      "H.B. Halicki",
+      "Harold Lloyd",
+      "Jennifer Jason Leigh",
+      "Jim Henson",
+      "Jimmy Wang Yu",
+      "John Lennon",
+      "Jonathan Frakes",
+      "Joseph Gordon-Levitt",
+      "Keanu Reeves",
+      "Marc Singer",
+      "Mark Achbar",
+      "Marlon Brando",
+      "Michael Polish",
+      "Myles Berkowitz",
+      "Orson Welles",
+      "Paul Bartel",
+      "Sally Potter",
+      "Seth MacFarlane",
+      "Sook-Yin Lee",
+      "Sylvester Stallone",
+      "Tom Noonan",
+      "Tommy Chong",
+      "Trey Parker",
+      "V\u00edt Klus\u00e1k",
+      "Whoopi Goldberg",
+      "Woody Allen",
+      "Zana Briski"
+    ],
+    "gold_count": null,
+    "vector_score": 0.0,
+    "graph_score": 1.0,
+    "vector_answer": "- Hayao Miyazaki (directed and voiced in Laputa: Castle in the Sky) [1]\n- Errol Morris (directed and appeared as himself in Fast, Cheap & Out of Control) [9]\n- Alfonso Arau (directed and acted in A Walk in the Clouds) [18]",
+    "vector_missing": [
+      "Alan Cumming",
+      "Barbra Streisand",
+      "Billy Bob Thornton",
+      "Bruce Brown",
+      "Bruce Kimmel",
+      "Burt Lancaster",
+      "Buster Keaton",
+      "Carl Reiner",
+      "Chi Muoi Lo",
+      "Clint Eastwood",
+      "Cyril Collard",
+      "Denzel Washington",
+      "Eric Zala",
+      "H.B. Halicki",
+      "Harold Lloyd",
+      "Jennifer Jason Leigh",
+      "Jim Henson",
+      "Jimmy Wang Yu",
+      "John Lennon",
+      "Jonathan Frakes"
+    ]
+  },
+  {
+    "id": "V1",
+    "class": "control",
+    "question": "Which movie matches this description: A group of scientists have developed the Resonator, a machine which allows whoever is within range to see beyond normal perceptible reality. But when the experiment succeeds, they are immediately attacked by terrible life forms.",
+    "gold": [
+      "From Beyond"
+    ],
+    "gold_count": null,
+    "vector_score": 1.0,
+    "graph_score": null,
+    "vector_answer": "From Beyond (1986) [1]",
+    "vector_missing": []
+  },
+  {
+    "id": "V2",
+    "class": "control",
+    "question": "Which movie matches this description: Three ex-girlfriends of a serial cheater set up their former lover to fall for the new girl in town so they can watch him get his heart broken.",
+    "gold": [
+      "John Tucker Must Die"
+    ],
+    "gold_count": null,
+    "vector_score": 1.0,
+    "graph_score": null,
+    "vector_answer": "John Tucker Must Die [1]",
+    "vector_missing": []
+  }
+]

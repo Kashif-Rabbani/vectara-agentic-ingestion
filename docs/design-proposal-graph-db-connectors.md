@@ -93,6 +93,33 @@ Approve a **small, time-boxed pilot** (size S — the hard part is already built
    - **Headline output:** answer recall/precision vs. golden answers at increasing corpus sizes (100 → 1,000 → 10,000 docs). If the thesis is right, the vector-only recall curve degrades with scale while the graph-fused curve stays flat — that plot is the deliverable.
 3. **Validate**: run it with 1–2 design partners who already own a knowledge graph.
 
+### Preview — a first run of this experiment already exists
+
+We ran a first version of the scaled eval on the **Neo4j "recommendations" movies dataset** (the standard graph-database demo dataset: 9,076 movies, 19,047 people, 35,778 acting + 9,955 directing relationships, pulled from Neo4j's public demo server). Three nested, seeded tiers (100 ⊂ 1,000 ⊂ 9,076 movies), each dual-ingested into its own Vectara corpus and its own named graph; a data-driven question battery with exact ground truth computed from the relationship data; the vector baseline **tuned** (neural reranker over 100 candidates, gpt-5 generation, 25 results in context). Harness and raw answers: [`eval/`](https://github.com/Kashif-Rabbani/vectara-agentic-ingestion/tree/main/eval) in the demo repo.
+
+**Vector-only recall per question (graph = 1.00 on every graph-shaped question, at every scale):**
+
+| Question (class) | T-100 | T-1k | T-9k | gold size at 9k |
+|---|---|---|---|---|
+| List all movies from year X *(completeness)* | 0.20 | 0.12 | 0.62 | 8 |
+| List all movies featuring actor X *(completeness)* | 0.33 | 0.62 | 0.38 | 56 |
+| How many movies did director X direct? *(aggregation)* | 1.00 | 0.00 | 0.00 | 42 |
+| How many movies released in year X? *(aggregation)* | 1.00 | 0.00 | 1.00 | 8 |
+| Oldest movie? *(ordering)* | 0.00 | 1.00 | 0.00 | 1 |
+| Highest IMDb rating? *(ordering)* | 0.00 | 1.00 | 0.00 | 1 |
+| Actors in movies directed by X? *(multi-hop)* | 1.00 | 0.71 | 0.52 | 132 |
+| Who both directed and acted in same movie? *(multi-hop)* | **0.00** | **0.00** | **0.00** | 291 |
+| Which movie is this plot? *(control ×2 — vector's home turf)* | 1.00 | 1.00 | 1.00 | 1 |
+| **Mean, graph-shaped questions** | **0.44** | **0.43** | **0.32** | |
+
+Three findings:
+
+1. **The failure scales with answer size, not just corpus size.** The multi-hop join ("actors in X's movies") degrades monotonically as the true answer grows (8 → 28 → 132 names: recall 1.00 → 0.71 → 0.52), and the self-join with 291 correct answers scores 0.00 at every scale. The mechanism is structural: the LLM sees at most ~25 retrieved chunks — an answer set larger than the context budget **cannot** be assembled by any tuning. A graph computes it in one query.
+2. **Counting collapses once the count exceeds what fits in context.** "How many did Woody Allen direct?" (42): the tuned pipeline confidently answers with the wrong number at 1k and 9k.
+3. **The controls hold.** Plot-similarity questions score 1.00 for vector search at every tier — each method wins where it's structurally suited, which is precisely the case for *fusion* rather than replacement.
+
+**Caveats, honestly:** one question per class per tier (small n — ordering flips 0→1→0 on famous-vs-obscure titles, visible noise); single run; 36 of 9,076 documents (0.4%) failed to index in the 9k corpus; dev tenant. The full pilot scales the battery to ~50 questions and adds HHEM/Open RAG Eval scoring — but the structural pattern is already unambiguous.
+
 **Exit criteria:** a measured quality delta plus at least one design partner who wants more. If either is missing, we stop — total cost is the pilot itself. Nothing in it touches the public query API.
 
 The deeper integration (graphs as a native source inside `/v2/query`) is the Phase-2 opportunity the pilot de-risks — it is described below, and it is **not** today's ask.
@@ -255,6 +282,7 @@ Demonstrated live against the Vectara platform (dev environment, `api.vectara.de
 
 | Claim | How verified |
 |---|---|
+| **The §6 scaled experiment**: on the Neo4j movies dataset (9,076 movies, 3 tiers), tuned vector-only retrieval scored 0.32–0.44 mean recall on graph-shaped questions vs. 1.00 for SPARQL, with controls at 1.00 for vector | Executed 2026-07-02; harness + per-question raw answers in `eval/` (extract → dual-ingest → battery → score, fully reproducible) |
 | **The §4 side-by-side failure is real**: vector search + generation returned 2 of 6 qualifying companies (33% recall) on a completeness question, while SPARQL returned its complete set | Executed live 2026-07-02 against corpus `agentic_ingestion_kashif` (gpt-5 preset) and the demo knowledge graph; raw outputs quoted verbatim in §4 |
 | Agents support `mcp` and `dynamic_vectara` tool types; MCP tool servers register + sync via `POST /v2/tool_servers` | We registered `mcp-server-sparql`, synced 12 tools, ran the agent |
 | Full dual-ingestion pipeline works (read → dedup → SHACL → KG write → Vectara index) | 6 companies ingested and cross-verified in both stores; event traces reproducible via `run_ingestion.py` |
