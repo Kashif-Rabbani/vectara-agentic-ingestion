@@ -82,7 +82,7 @@ The irreducible gap, precisely: **relationships** (inexpressible in any filter) 
 
 Approve a **time-boxed pilot** (size S — the connector and benchmark harness already exist):
 
-1. **Host** the SPARQL connector as a Vectara-certified tool (today's self-host-and-tunnel path is a non-starter for customers).
+1. **Ship** the SPARQL connector as a first-party tool (today's self-host-and-tunnel path is a non-starter for customers). **The precedent already exists:** the catalog's `sql_query` tool connects to external customer databases — PostgreSQL, MySQL, MariaDB, ClickHouse. This is SPARQL joining that family, not a new integration paradigm; the open-source [mcp-server-sparql](https://github.com/Kashif-Rabbani/mcp-server-sparql) is the reference implementation.
 2. **Measure** — scale the §4 experiment: ~50 questions per tier, multiple runs, HHEM + Open RAG Eval scoring, controls retained so the eval keeps showing where graphs *don't* help.
 3. **Validate** with 1–2 design partners who already own a knowledge graph.
 
@@ -211,7 +211,7 @@ Response: a normal `/v2/query` response — `search_results[]` interleaving grap
 ## 9. Security model
 
 - Graph endpoint credentials via `agent.secrets`-equivalent storage: encrypted at rest with the agent's KMS key, masked `****` in observability events — the same service-account pattern Wolken uses today (`PATCH /v2/agents/{key}/secrets`).
-- Hosting the connector means Vectara makes outbound calls to customer-supplied URLs → requires the standard SSRF-class network review.
+- Outbound calls to customer-supplied database endpoints are an **already-shipped pattern**: the catalog's `sql_query` (PostgreSQL/MySQL/MariaDB/ClickHouse) and `web_get` do exactly this today. The SSRF review extends an accepted precedent rather than introducing a new risk class. One improvement over `sql_query`'s per-call connection details: resolve graph credentials via `agent.secrets` `$ref`s so they're encrypted at rest and masked in event streams.
 - Write access is off by default at graph registration (`write_enabled: false`); enabling it exposes write *tools* only to explicitly configured agents, never to the retrieval path.
 
 ## 10. Alternatives considered
@@ -229,7 +229,7 @@ Response: a normal `/v2/query` response — `search_results[]` interleaving grap
 - **Fusion weights** (`graph_score_weight`, the `userfn` expression) need real query data to tune.
 - **Traversal cost bounds** — hard depth ceiling + timeout so a pathological graph shape cannot blow up query latency.
 - **Ownership** — which team owns "graph connectivity" long-term.
-- **Internal precedent check** — whether Jira/Slack/Wolken integrations are backend-native or hosted connectors under the hood (unverified; affects how novel a "new source type" is architecturally).
+- ~~Internal precedent check~~ **Settled** (console tool catalog, 2026-07-03): Jira/Slack/Wolken are first-party catalog tools with dedicated categories, versioned IDs, and connector-managed credentials — and `sql_query` already connects to external customer databases (PostgreSQL, MySQL, MariaDB, ClickHouse). A first-party SPARQL tool joins an existing family rather than creating a new one.
 
 ## 12. Success metrics
 
@@ -254,6 +254,7 @@ Demonstrated live against the Vectara platform (dev environment, `api.vectara.de
 | Reranker types `customer_reranker`, `mmr`, `userfn`, `chain` exist | Same OpenAPI spec: `CustomerSpecificReranker`, `MMRReranker`, `UserFunctionReranker`, `ChainReranker` schemas |
 | Agent secrets API (`/v2/agents/{key}/secrets`) and tool-server endpoints exist | Same OpenAPI spec, paths section |
 | `search.graphs[]` does **not** exist today (i.e., this proposal is genuinely new surface) | Same OpenAPI spec: no `graphs` property in `SearchCorporaParameters` |
+| Jira/Slack/Wolken ship as first-party catalog tools (dedicated categories, versioned IDs, connector credentials); `sql_query` already targets external customer databases (PostgreSQL/MySQL/MariaDB/ClickHouse) | Vectara console tool catalog, inspected 2026-07-03 |
 
 ### Tier 2 — Vectara public documentation (citable)
 
@@ -269,10 +270,9 @@ Demonstrated live against the Vectara platform (dev environment, `api.vectara.de
 | Claim | Status |
 |---|---|
 | Internal implementation of multi-corpus fan-out/interleaving (and hence how cheaply a third source slots in) | **Inferred from API behavior** — describes observable behavior, not internal architecture. Needs a conversation with the query-platform team. |
-| Jira/Slack/Wolken are backend-native integrations | **Unverified assumption**, flagged throughout. |
+| Entity-linking approach, traversal bounds, fusion weights | **Original design proposal** — no precedent claimed. |
 | SPARQL connector works unmodified against GraphDB/Stardog/Virtuoso/Neptune | **Standard-compliance inference** — only Fuseki is tested. Pilot task. |
 | Competitive landscape (agent-tool bolt-ons; no reranking-fused competitor) | **Author's knowledge, early 2026, not systematically researched.** Validate before external use. |
-| Entity-linking approach, traversal bounds, fusion weights | **Original design proposal** — no precedent claimed. |
 | Customer demand | **No evidence yet** — placeholders in §5 to be filled from sales/CS. |
 
 ## Appendix B — references
