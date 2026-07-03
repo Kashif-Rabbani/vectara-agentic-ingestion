@@ -15,7 +15,7 @@ Vectara's search finds text *similar* to a question. It cannot **guarantee** ans
 
 Knowledge graphs answer these questions exactly, and many enterprise customers already own one. Vectara has no first-party way to connect to them.
 
-We built the connector, ran it end-to-end with a Vectara agent, and benchmarked it at three scales. **The ask (§6) is a small, time-boxed pilot** — host the connector officially, scale the benchmark, validate with design partners. If the quality delta or the demand isn't there, we stop. If it is, the long-term play is a real differentiator: graph facts and semantic search fused into one answer, one citation model, through the pipeline Vectara already ships.
+We built the connector, ran it end-to-end with a Vectara agent, and benchmarked it at three scales. **The ask (§6) is a small, time-boxed pilot** — ship the connector as a first-party tool (joining the `sql_query` database family), scale the benchmark, validate with design partners. If the quality delta or the demand isn't there, we stop. If it is, the long-term play is a real differentiator: graph facts and semantic search fused into one answer, one citation model, through the pipeline Vectara already ships.
 
 ## 2. Problem Statement
 
@@ -27,7 +27,7 @@ Every Vectara answer today is built the same way: retrieve the passages most sim
 
 The shapes are exactly the enterprise questions — "all contracts expiring this year," "how many portfolio companies are EU-based," "which vendors reach a sanctioned entity through subsidiaries" — we use the movie forms because we can back each one with data.
 
-These failures are quiet: confident, well-cited, wrong by omission. Nothing in our stack can flag them — every cited fragment is *true*; the error lives in what retrieval never surfaced. For a brand built on grounded, hallucination-free answers, that is the worst kind of failure.
+These failures are quiet: confident, well-cited, wrong by omission. Nothing in our stack can flag them — every cited fragment is *true*; the error lives in what retrieval never surfaced. To be clear, this is not a Vectara defect — it is an architectural property of every top-k retrieval system on the market. That's exactly what makes it an opportunity: a brand built on grounded, hallucination-free answers is uniquely positioned to be the first to close it.
 
 Meanwhile, the systems that answer these questions perfectly — knowledge graphs — already sit in customers' data centers (compliance, supply-chain, org/MDM graphs). A customer asking *"can Vectara use our knowledge graph?"* today effectively hears **no**: self-host your own tool server, with no support, vetting, or credential management.
 
@@ -76,7 +76,7 @@ The irreducible gap, precisely: **relationships** (inexpressible in any filter) 
 3. **One connector, most of the market.** The connector implements the W3C SPARQL 1.1 standard — verified against Jena Fuseki; GraphDB, Stardog, Virtuoso, Blazegraph, and Neptune expose compliant endpoints (validating 2–3 is a pilot task). No per-vendor treadmill.
 4. **Differentiated timing.** GraphRAG is shipping industry-wide, almost entirely as agent-tool bolt-ons. We are not aware of any platform fusing graph results through a production reranking + citation + grounding pipeline (*validate before external use*). Vectara already owns that pipeline.
 
-**Honest gap:** no named customer demand yet — to gather from sales/CS in parallel. *(☐ prospects with KGs · ☐ deals where this came up · ☐ community asks.)*
+**Demand signal — named:** **Broadcom** (existing customer) asked for a knowledge graph in their CLM project — modeling the hierarchy between contracts — and Vectara has already built external knowledge graphs as part of that engagement. Today that is bespoke, per-customer work; this proposal turns it into a platform capability. Note the §2 mapping — "all contracts expiring this year" — is not a hypothetical: contract-hierarchy questions are literally this customer's use case. *(Confirm engagement specifics with the account team; additional signal to gather from sales/CS: ☐ other prospects with KGs · ☐ deals where this came up.)*
 
 ## 6. The ask
 
@@ -86,7 +86,9 @@ Approve a **time-boxed pilot** (size S — the connector and benchmark harness a
 2. **Measure** — scale the §4 experiment: ~50 questions per tier, multiple runs, HHEM + Open RAG Eval scoring, controls retained so the eval keeps showing where graphs *don't* help.
 3. **Validate** with 1–2 design partners who already own a knowledge graph.
 
-**Exit criteria:** a measured quality delta plus at least one design partner who wants more — otherwise we stop, and the sunk cost is the pilot. Nothing in it touches the public query API. The native integration (`search.graphs[]` in `/v2/query`, §7–8) is the Phase-2 opportunity the pilot de-risks — not today's ask.
+**Exit criteria:** a measured quality delta plus at least one design partner who wants more — otherwise we stop, and the sunk cost is the pilot. Nothing in it touches the public query API.
+
+The two phases differ in **depth, not deployment**: the pilot lives at the *agent-tool level* — the agent calls the graph the same way it calls `sql_query` today. The *retrieval-pipeline level* — `search.graphs[]` fused inside `/v2/query` itself, where graph and corpus results get reranked and cited together (§7–8) — is the Phase-2 opportunity the pilot de-risks. It is not today's ask.
 
 ---
 
@@ -273,7 +275,7 @@ Demonstrated live against the Vectara platform (dev environment, `api.vectara.de
 | Entity-linking approach, traversal bounds, fusion weights | **Original design proposal** — no precedent claimed. |
 | SPARQL connector works unmodified against GraphDB/Stardog/Virtuoso/Neptune | **Standard-compliance inference** — only Fuseki is tested. Pilot task. |
 | Competitive landscape (agent-tool bolt-ons; no reranking-fused competitor) | **Author's knowledge, early 2026, not systematically researched.** Validate before external use. |
-| Customer demand | **No evidence yet** — placeholders in §5 to be filled from sales/CS. |
+| Customer demand (Broadcom CLM knowledge-graph engagement) | **Author's account knowledge** — directionally solid (existing customer, real KG ask, bespoke KGs already built); confirm specifics with the account team before quoting externally. |
 
 ## Appendix B — references
 
