@@ -2,10 +2,10 @@
 
 | | |
 |---|---|
-| **Status** | Draft v4 |
+| **Status** | Draft v5 |
 | **Author** | Kashif Rabbani |
 | **Working demo** | [vectara-agentic-ingestion](https://github.com/Kashif-Rabbani/vectara-agentic-ingestion) · [mcp-server-sparql](https://github.com/Kashif-Rabbani/mcp-server-sparql) |
-| **How to read this** | Sections 1–6 are a ~5-minute business read. Section 7 onward is technical design detail — read only if the first half convinces you. |
+| **How to read this** | Sections 1–6 are the business case (~7 minutes). Section 7 onward is technical design detail — read it only if the first half convinces you. |
 
 ---
 
@@ -100,7 +100,7 @@ In short: what stays out of reach for vector search, no matter the tuning, is **
 
 ## 5. What Vectara gains
 
-1. **A stronger anti-hallucination story — our brand.** "Confidently incomplete" answers are a grounding failure that nothing in today's stack can detect. HHEM cannot catch them either, because every cited fragment is true. Graph fusion eliminates this failure for the question classes above, and the improvement is measurable.
+1. **A stronger anti-hallucination story — our brand.** "Confidently incomplete" answers are a grounding failure that nothing in today's stack — including HHEM — can detect (§4 shows why). Graph fusion eliminates this failure for the question classes above, and the improvement is measurable.
 2. **A door into graph-owning enterprises.** Banks, pharma, manufacturing, and MDM-mature companies already own knowledge graphs. First-party connectivity turns "can you use our KG?" from a no into a demo.
 3. **One connector covers most of the market.** The connector implements the W3C SPARQL 1.1 standard, not a vendor API. We verified it against Apache Jena Fuseki. GraphDB, Stardog, Virtuoso, Blazegraph, and Amazon Neptune all expose SPARQL 1.1 endpoints, so the same build should work against them; validating two or three of these is a pilot task. There is no per-vendor connector treadmill here.
 4. **Timing.** GraphRAG features are shipping across the industry, almost entirely as agent-tool bolt-ons. We are not aware of any platform that fuses graph results through a production reranking, citation, and grounding pipeline (*validate via competitive research before using this claim externally*). Vectara already owns that pipeline. We would be adding a source, not building a system.
@@ -125,9 +125,9 @@ The two phases differ in **depth, not deployment.** The pilot lives at the *agen
 
 ---
 
-## 7. Technical design — end-state architecture (Phase 2)
+## 7. Technical design — the Phase-2 architecture
 
-Today `/v2/query` fuses two signals — lexical (BM25-style) and semantic (dense vectors) — via `lexical_interpolation`, then reranks the merged candidate pool. The proposal adds graph traversal as the third:
+Section 3 described the idea in one paragraph. This section shows how it maps onto the pipeline Vectara already runs.
 
 ```
                               /v2/query
@@ -149,11 +149,11 @@ Today `/v2/query` fuses two signals — lexical (BM25-style) and semantic (dense
                    generation + citations + HHEM (EXISTS)
 ```
 
-Top-k from each source, rerank the union, return the best top-n — the same fusion pattern multi-corpus search performs today across N corpora, with one more source type.
+The flow is the same one multi-corpus search performs today: take the top results from each source, rerank the union, and return the best of it. We add one more source type.
 
-### The load-bearing design decision: normalize graph hits into `search_results[]`
+### The key design decision: graph hits become normal search results
 
-Each matched entity/subgraph is serialized into the exact shape a corpus hit already has:
+Each matched entity is serialized into the exact shape a corpus hit already has:
 
 ```json
 {
@@ -168,29 +168,32 @@ Each matched entity/subgraph is serialized into the exact shape a corpus hit alr
   }
 }
 ```
-*(Entity and vocabulary taken from the §4 experiment's actual graph — this is the shape our eval already produces.)*
 
-Consequence: **reranking, generation, citations, and every existing customer UI work unmodified.** The neural reranker scores serialized graph facts and corpus passages as what they both are — text candidates. A `userfn` stage blends `graph_score` in (expression below is a starting point, not a tuned default). Citation templates resolve `entity_uri` instead of a doc URL — a template variant, not new plumbing.
+*(The entity and vocabulary come from the §4 experiment's actual graph — our eval already produces this shape.)*
 
-### Reuse table — why this is additive, not a from-scratch build
+Because graph hits look like ordinary results, **reranking, generation, citations, and every existing customer UI work without modification.** The neural reranker treats a serialized graph fact and a text passage the same way: as text to score. A `userfn` stage can blend the graph's own score into the ranking (§8 shows a starting expression). Citations resolve `entity_uri` instead of a document URL — a template change, not new plumbing.
+
+### What exists vs. what is new
 
 | Needed | Already ships | New work |
 |---|---|---|
-| SPARQL execution (5+ vendors, 1 protocol) | ✅ mcp-server-sparql | wrap as internal retrieval source |
-| Multi-source fan-out + interleave | ✅ `search.corpora[]` | add sibling `search.graphs[]` |
-| Cross-source rerank + score fusion | ✅ `chain` / `customer_reranker` / `userfn` | author default fusion expression |
-| Citations over mixed origins | ✅ `citations.url_pattern` templating | `entity_uri` template variant |
-| Credential storage, masking, encryption | ✅ `agent.secrets` (Wolken pattern) | apply to graph endpoints |
-| Schema grounding for linking/traversal | ✅ SHACL shapes (already used at ingest) | reuse at query time |
+| SPARQL execution (5+ vendors, 1 protocol) | ✅ mcp-server-sparql | wrap as an internal retrieval source |
+| Multi-source fan-out and interleaving | ✅ `search.corpora[]` | add the sibling `search.graphs[]` |
+| Cross-source reranking and score fusion | ✅ `chain` / `customer_reranker` / `userfn` | write the default fusion expression |
+| Citations over mixed origins | ✅ `citations.url_pattern` templating | an `entity_uri` template variant |
+| Credential storage, masking, encryption | ✅ `agent.secrets` (the Wolken pattern) | apply it to graph endpoints |
+| Schema grounding for linking and traversal | ✅ SHACL shapes (already used at ingest) | reuse them at query time |
 | Answer-quality measurement | ✅ HHEM / Open RAG Eval | build the multi-hop eval set |
 
-### Graph retrieval semantics
+### How graph retrieval behaves
 
-- **Entity linking:** `explicit` mode first (caller/agent supplies `entity_uris`, or schema-driven matching against the graph's ontology). Fully-automatic NL entity linking is a later mode whose feasibility the pilot's eval informs — v1 deliberately does not depend on solving it.
-- **Bounded traversal, not LLM-generated SPARQL:** the default execution path is a depth-bounded neighborhood expansion (`traversal_depth` ≤ 2, hard timeout) from linked entities — deterministic, injection-proof, cost-capped. Free-form NL→SPARQL remains an *agent-tool* capability, never the query-path default.
-- **Read-only by construction:** the retrieval path issues only SELECT/CONSTRUCT-class queries. Graph writes (`sparql_update`) exist solely as explicitly opted-in agent tools, unchanged from the demo's posture.
+- **Entity linking starts explicit.** The caller or the agent supplies entity URIs, or entities are matched against the graph's schema. Fully automatic entity linking from natural language is a later mode; the pilot's eval tells us how feasible it is. Version 1 does not depend on it.
+- **Bounded traversal, not LLM-generated SPARQL.** The default is a depth-limited walk from the linked entities (depth ≤ 2, hard timeout). It is deterministic, safe from injection, and cost-capped. Free-form natural-language-to-SPARQL stays an agent-tool capability, never the query-path default.
+- **Read-only.** The retrieval path only reads (SELECT/CONSTRUCT-class queries). Writes exist only as explicitly enabled agent tools.
 
-## 8. Proposed API surface (illustrative — for reaction, not final)
+## 8. Proposed API surface
+
+The shapes below are illustrative — concrete enough to react to, not final.
 
 ```yaml
 # New resource — peer to /v2/corpora
@@ -237,36 +240,35 @@ POST /v2/query
 }
 ```
 
-Response: a normal `/v2/query` response — `search_results[]` interleaving graph- and corpus-origin hits (exactly as multi-corpus interleaves today), one `summary`, `[N]` citations spanning both sources, one HHEM score.
+The response is a normal `/v2/query` response: `search_results[]` interleaving graph and corpus hits (exactly as multi-corpus interleaves today), one `summary`, `[N]` citations spanning both sources, one HHEM score.
 
 ## 9. Security model
 
-- Graph endpoint credentials via `agent.secrets`-equivalent storage: encrypted at rest with the agent's KMS key, masked `****` in observability events — the same service-account pattern Wolken uses today (`PATCH /v2/agents/{key}/secrets`).
-- Outbound calls to customer-supplied database endpoints are an **already-shipped pattern**: the catalog's `sql_query` (PostgreSQL/MySQL/MariaDB/ClickHouse) and `web_get` do exactly this today. The SSRF review extends an accepted precedent rather than introducing a new risk class. One improvement over `sql_query`'s per-call connection details: resolve graph credentials via `agent.secrets` `$ref`s so they're encrypted at rest and masked in event streams.
-- Write access is off by default at graph registration (`write_enabled: false`); enabling it exposes write *tools* only to explicitly configured agents, never to the retrieval path.
+- **Credentials** live in `agent.secrets`: encrypted at rest with the agent's KMS key, masked as `****` in event streams. This is the same service-account pattern Wolken uses today — and an improvement over `sql_query`, which takes connection details per call.
+- **Outbound calls** to customer database endpoints are an already-shipped pattern (`sql_query`, `web_get`). The SSRF review extends an accepted precedent rather than opening a new risk class.
+- **Writes are off by default** (`write_enabled: false`). Enabling them exposes write tools only to explicitly configured agents — never to the retrieval path.
 
 ## 10. Alternatives considered
 
 | Alternative | Why not (as the end state) |
 |---|---|
-| **Status quo — customer self-hosts a generic MCP server** | Zero adoption path; no credentials/vetting/discoverability; answer quality hostage to per-turn LLM tool choice |
-| **Agent-tool-only forever (pilot as terminus)** | Never reaches the direct-RAG `/v2/query` surface; graph and corpus results never reranked/cited together; caps differentiation at parity with everyone else's bolt-ons |
-| **Skip the pilot, build `search.graphs[]` now** | Commits public API surface before any measured quality evidence or demand signal exists |
-| **Vendor-specific connector (e.g. Neo4j/Cypher only)** | SPARQL 1.1 covers 5+ vendors in one implementation; a Cypher adapter is a future *additive* source behind the same `search.graphs[]` shape |
+| **Status quo — customer self-hosts a generic MCP server** | No adoption path: no credentials, no vetting, no discoverability. Answer quality depends on the LLM choosing to call the tool correctly on every turn. |
+| **Agent-tool-only forever (pilot as the end state)** | Never reaches the direct `/v2/query` surface. Graph and corpus results are never reranked or cited together. Differentiation stays at parity with everyone else's bolt-ons. |
+| **Skip the pilot, build `search.graphs[]` now** | Commits public API surface before there is measured evidence or demand. |
+| **Vendor-specific connector (e.g. Neo4j/Cypher only)** | SPARQL 1.1 covers five-plus vendors in one implementation. A Cypher adapter can be added later behind the same `search.graphs[]` shape. |
 
 ## 11. Risks & open questions
 
-- **Entity linking quality** is the crux for a future fully-automatic mode — it gets its own eval line in the pilot, and v1 does not depend on it.
+- **Entity-linking quality** is the hardest part of a future automatic mode. It gets its own eval line in the pilot; version 1 does not depend on it.
 - **Fusion weights** (`graph_score_weight`, the `userfn` expression) need real query data to tune.
-- **Traversal cost bounds** — hard depth ceiling + timeout so a pathological graph shape cannot blow up query latency.
-- **Ownership** — which team owns "graph connectivity" long-term.
-- ~~Internal precedent check~~ **Settled** (console tool catalog, 2026-07-03): Jira/Slack/Wolken are first-party catalog tools with dedicated categories, versioned IDs, and connector-managed credentials — and `sql_query` already connects to external customer databases (PostgreSQL, MySQL, MariaDB, ClickHouse). A first-party SPARQL tool joins an existing family rather than creating a new one.
+- **Traversal cost** needs a hard depth ceiling and timeout, so a pathological graph shape cannot slow down queries.
+- **Ownership** — which team owns graph connectivity long-term.
 
 ## 12. Success metrics
 
-1. **The structural-gap number:** fraction of eval questions unanswerable by vector-only retrieval at *any* k, answered correctly with graph fusion. This is the headline.
-2. **Answer correctness/completeness delta** against labeled golden answers (Open RAG Eval methodology), graph-augmented vs. vector-only. (Note: HHEM alone cannot measure this — an incomplete answer is still "consistent" with its incomplete sources; completeness requires golden-answer comparison.)
-3. Design-partner conversion: does anyone who sees the pilot want the native integration badly enough to co-design it.
+1. **The structural-gap number:** the fraction of eval questions that vector-only retrieval cannot answer at *any* k, but graph fusion answers correctly. This is the headline.
+2. **Answer correctness and completeness** against golden answers (Open RAG Eval methodology), graph-augmented vs. vector-only. HHEM alone cannot measure completeness: an incomplete answer is still "consistent" with its incomplete sources.
+3. **Design-partner conversion:** does anyone who sees the pilot want the native integration badly enough to co-design it.
 
 ## Appendix A — Sources & confidence levels
 
@@ -278,13 +280,13 @@ Demonstrated live against the Vectara platform (dev environment, `api.vectara.de
 
 | Claim | How verified |
 |---|---|
-| **The §4 scaled experiment**: on the Neo4j movies dataset (9,076 movies, 3 tiers), tuned vector-only retrieval scored 0.32–0.44 mean recall on graph-shaped questions vs. 1.00 for SPARQL, with controls at 1.00 for vector | Executed 2026-07-02; harness + per-question raw answers in `eval/` (extract → dual-ingest → battery → score, fully reproducible) |
+| **The §4 experiment**: three methods at three scales on the Neo4j movies dataset; the graph scored 1.00 on every graph-shaped question, tuned vector search failed the large-answer and computation questions (0.00 on the 291-answer join at every scale, wrong counts at 1k/9k), controls scored 1.00 for vector | Executed 2026-07-02/03; harness + per-question raw answers in `eval/`; scoring correction disclosed in `eval/README.md` |
 | Agents support `mcp` and `dynamic_vectara` tool types; MCP tool servers register + sync via `POST /v2/tool_servers` | We registered `mcp-server-sparql`, synced 12 tools, ran the agent |
 | Full dual-ingestion pipeline works (read → dedup → SHACL → KG write → Vectara index) | 6 companies ingested and cross-verified in both stores; event traces reproducible via `run_ingestion.py` |
 | `POST /v2/query` takes `search.corpora[]` (array of `KeyedSearchCorpus`, each with `corpus_key`, `metadata_filter`, `lexical_interpolation`) | [OpenAPI spec](https://api.vectara.io/v2/openapi.json), `SearchCorporaParameters` schema, fetched 2026-07-02 |
 | Reranker types `customer_reranker`, `mmr`, `userfn`, `chain` exist | Same OpenAPI spec: `CustomerSpecificReranker`, `MMRReranker`, `UserFunctionReranker`, `ChainReranker` schemas |
 | Agent secrets API (`/v2/agents/{key}/secrets`) and tool-server endpoints exist | Same OpenAPI spec, paths section |
-| `search.graphs[]` does **not** exist today (i.e., this proposal is genuinely new surface) | Same OpenAPI spec: no `graphs` property in `SearchCorporaParameters` |
+| `search.graphs[]` does **not** exist today (this proposal is genuinely new surface) | Same OpenAPI spec: no `graphs` property in `SearchCorporaParameters` |
 | Jira/Slack/Wolken ship as first-party catalog tools (dedicated categories, versioned IDs, connector credentials); `sql_query` already targets external customer databases (PostgreSQL/MySQL/MariaDB/ClickHouse) | Vectara console tool catalog, inspected 2026-07-03 |
 
 ### Tier 2 — Vectara public documentation (citable)
